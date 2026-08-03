@@ -8,8 +8,8 @@ nobody was systematically working, a screening process that ate a day a week —
 decided to engineer my way out of it rather than buy a tool that almost fit.
 
 This repository is a **showcase**, not a code dump. Each project below has a write-up
-covering what it does, how it's built, and the decisions I'd defend in a review. Source
-for most of these lives in private repositories.
+covering what it does, how it's built, and the decisions I'd defend in a review. The
+source itself is kept private — happy to walk through any of it directly.
 
 ---
 
