@@ -1,0 +1,9 @@
+# This repository is a showcase — it should never contain source, data, or secrets.
+.env
+.env.*
+*.csv
+*.pem
+*.key
+node_modules/
+.DS_Store
+Thumbs.db
