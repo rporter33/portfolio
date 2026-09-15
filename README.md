@@ -40,6 +40,22 @@ hires viable, with a 36-point score separation between the two groups.
 
 ---
 
+### [MTG Companion](projects/mtg-companion.md)
+A local-first Magic: The Gathering companion, built around the thing no existing tool does:
+getting a brand-new player to their first game.
+
+A 27-beat guided game teaches by playing — the user makes every decision while a coach
+explains it. Around it sit a card reference, a deck builder that validates against ten
+formats' real construction rules, and an offline life counter. Ban lists are read from
+Scryfall at validation time rather than copied into the repo, because a stale copy fails
+**silently**. The land recommender was calibrated against decks that demonstrably work after
+the intuitive objective turned out to be measurably wrong — it recommended 27 lands in a
+60-card deck.
+
+`React` · `Vite` · `PWA` · `IndexedDB` · `Scryfall API` · `Vitest` · `GitHub Pages`
+
+---
+
 ### [Anagnosis · ἀνάγνωσις](projects/anagnosis.md)
 A local-first Ancient Greek reader that takes you from the alphabet to Homer.
 
