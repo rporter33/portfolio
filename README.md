@@ -8,8 +8,10 @@ nobody was systematically working, a screening process that ate a day a week —
 decided to engineer my way out of it rather than buy a tool that almost fit.
 
 This repository is a **showcase**, not a code dump. Each project below has a write-up
-covering what it does, how it's built, and the decisions I'd defend in a review. The
-source itself is kept private — happy to walk through any of it directly.
+covering what it does, how it's built, and the decisions I'd defend in a review. Most of
+the source is private, because it touches client and candidate data — happy to walk through
+any of it directly. MTG Companion has nothing confidential in it, so that one is public and
+linked below.
 
 ---
 
@@ -40,7 +42,7 @@ hires viable, with a 36-point score separation between the two groups.
 
 ---
 
-### [MTG Companion](projects/mtg-companion.md)
+### [MTG Companion](projects/mtg-companion.md) · [source](https://github.com/rporter33/mtg-companion)
 A local-first Magic: The Gathering companion, built around the thing no existing tool does:
 getting a brand-new player to their first game.
 

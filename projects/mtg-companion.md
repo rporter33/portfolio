@@ -3,6 +3,8 @@
 A local-first Magic: The Gathering companion — card reference, format-aware deck builder,
 play companion, and an interactive guide that teaches the game by playing it.
 
+**Source:** [github.com/rporter33/mtg-companion](https://github.com/rporter33/mtg-companion)
+
 **Stack:** React · Vite · PWA (service worker + manifest) · IndexedDB · localStorage · Scryfall API · Vitest · GitHub Pages
 
 ---
