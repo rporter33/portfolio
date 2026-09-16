@@ -5,8 +5,11 @@ window between the BlizzCon announcement and the beta opening.
 
 **Stack:** React · Vite · PWA (service worker + manifest) · localStorage · no backend
 
-**Source:** [`apps/hearthkeeper/`](../apps/hearthkeeper) — the one project in this repository
-that ships its code, because there is no client data in it to protect.
+**Live:** [rporter33.github.io/hearthkeeper](https://rporter33.github.io/hearthkeeper/) ·
+**Source:** [github.com/rporter33/hearthkeeper](https://github.com/rporter33/hearthkeeper)
+
+The one project here that is fully open — a fan tool for a game beta holds nobody's data, so
+there is nothing to keep private.
 
 ---
 

@@ -10,9 +10,9 @@ decided to engineer my way out of it rather than buy a tool that almost fit.
 This repository is a **showcase**, not a code dump. Each project below has a write-up
 covering what it does, how it's built, and the decisions I'd defend in a review. The source is
 kept private where the work touches client or candidate data — happy to walk through any of it
-directly. The exception is [Hearthkeeper](apps/hearthkeeper), which ships its source here:
-it's a fan tool for a game beta with nobody's data in it, so there's nothing to protect and
-reading the code is faster than reading about it.
+directly. One project is fully public: [Hearthkeeper](https://github.com/rporter33/hearthkeeper)
+is a fan tool for a game beta with nobody's data in it, so the code and the live app are
+both open.
 
 ---
 
@@ -51,7 +51,9 @@ Logs findings in one field and exports them as a forum-ready report; scores test
 against content the live phase can actually reach; and carries a confidence flag on every row
 of game data, because during an announcement window most circulating "facts" are somebody's
 paraphrase. **84 unit tests** over the pure logic plus a browser smoke test that cuts the
-network and checks the journal is still there. Source is in this repository.
+network and checks the journal is still there.
+
+[Live app](https://rporter33.github.io/hearthkeeper/) · [source](https://github.com/rporter33/hearthkeeper)
 
 `React` · `Vite` · `PWA / service worker` · `localStorage` · `versioned content packs`
 
