@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Hearthkeeper">
+  <rect width="64" height="64" rx="14" fill="#11161f"/>
+  <path d="M32 9 51 20v24L32 55 13 44V20z" fill="none" stroke="#c8a15a" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M32 21c5 5 8 9 8 14a8 8 0 0 1-16 0c0-5 3-9 8-14z" fill="#c8a15a"/>
+  <path d="M32 31c2 2.4 3.2 4.3 3.2 6.4a3.2 3.2 0 0 1-6.4 0c0-2.1 1.2-4 3.2-6.4z" fill="#11161f"/>
+</svg>

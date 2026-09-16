@@ -1,0 +1,15 @@
+{
+  "name": "Hearthkeeper — Forever beta companion",
+  "short_name": "Hearthkeeper",
+  "description": "Offline field journal, coverage tracker and report writer for the World of Warcraft: Forever beta.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#11161f",
+  "theme_color": "#11161f",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

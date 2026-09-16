@@ -8,8 +8,11 @@ nobody was systematically working, a screening process that ate a day a week —
 decided to engineer my way out of it rather than buy a tool that almost fit.
 
 This repository is a **showcase**, not a code dump. Each project below has a write-up
-covering what it does, how it's built, and the decisions I'd defend in a review. The
-source itself is kept private — happy to walk through any of it directly.
+covering what it does, how it's built, and the decisions I'd defend in a review. The source is
+kept private where the work touches client or candidate data — happy to walk through any of it
+directly. The exception is [Hearthkeeper](apps/hearthkeeper), which ships its source here:
+it's a fan tool for a game beta with nobody's data in it, so there's nothing to protect and
+reading the code is faster than reading about it.
 
 ---
 
@@ -37,6 +40,20 @@ it correctly gated **20/20** compensation-mismatched candidates and rated **18/1
 hires viable, with a 36-point score separation between the two groups.
 
 `Python` · `Claude API (Haiku)` · `Socrata open data` · `structured LLM output` · `corpus calibration`
+
+---
+
+### [Hearthkeeper — WoW: Forever beta companion](projects/hearthkeeper.md)
+A local-first field journal for a five-week game beta, built in the days between the
+announcement and the beta opening.
+
+Logs findings in one field and exports them as a forum-ready report; scores test coverage only
+against content the live phase can actually reach; and carries a confidence flag on every row
+of game data, because during an announcement window most circulating "facts" are somebody's
+paraphrase. **84 unit tests** over the pure logic plus a browser smoke test that cuts the
+network and checks the journal is still there. Source is in this repository.
+
+`React` · `Vite` · `PWA / service worker` · `localStorage` · `versioned content packs`
 
 ---
 

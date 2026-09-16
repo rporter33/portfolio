@@ -1,9 +1,11 @@
-# This repository is a showcase — it should never contain source, data, or secrets.
+# A showcase repository: write-ups, plus the one app whose source ships here (apps/hearthkeeper).
+# Client data, candidate data and secrets never belong in it.
 .env
 .env.*
 *.csv
 *.pem
 *.key
 node_modules/
+dist/
 .DS_Store
 Thumbs.db
