@@ -154,7 +154,7 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire. That became the rule for everything after it: 803
+advances and that no console errors fire. That became the rule for everything after it: 809
 unit tests cover the logic, and eighteen browser specs drive the real interface for the parts
 a unit test cannot see.
 
@@ -277,6 +277,16 @@ own key with its own `updatedAt`. A save writes the one deck that changed; a cor
 longer takes the decks with it; the old blob is split on first read and only rewritten once
 every deck has landed. The backup file's shape is unchanged. The backend interface is a keyed
 string store, so a server is one swap and carries the timestamps with it.
+
+**Then the structure caught up with the features.** The browser suite, which had caught every
+real regression, ran only by hand; it now gates the deploy in CI, in a real Chromium against
+the built app. The 726-line editor became a 240-line editor and a folder of view components
+with one row contract. The rarer deck screens became their own chunks, prefetched on idle so
+the offline guarantee holds, and the Decks chunk halved. The coach's checks and the
+first-deck flow's targets, two descriptions of the same sensible deck, became one skeleton
+module with a test that says so. And a stepper, a section header and a chip became shared
+components, with named layout modifiers replacing 104 of 165 inline style props; what is
+left inline is data.
 
 The routing change found a real bug on its first run through the existing specs: React
 flushes a route change synchronously while a state update from the same effect is still
