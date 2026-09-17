@@ -155,7 +155,7 @@ pushing the hand off the bottom of a phone screen.
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
 advances and that no console errors fire. That became the rule for everything after it: 803
-unit tests cover the logic, and seventeen browser specs drive the real interface for the parts
+unit tests cover the logic, and eighteen browser specs drive the real interface for the parts
 a unit test cannot see.
 
 ## Growing it into a real deck builder
@@ -244,6 +244,18 @@ Nothing in it is invented. The staples come from Scryfall by the same oracle tag
 classifiers were scored against, with a plainer fallback per role in case a tag slug changes.
 The result is a deck the coach would call sensible rather than one anyone would call
 optimised, and the screen says the numbers are a guide, not a rule.
+
+**Adding cards shows the value of a pick before it is added.** The in-deck search listed
+names alphabetically with a mana cost and nothing else. It now sorts by how played each card
+is unless asked otherwise, because Scryfall carries its EDHREC rank on every card and "what do
+people run in these colours" is the question a builder is asking; price, mana value, name and
+release date are a select away. Every row carries its price in the deck's market, its type,
+whether it is already in the deck and how many you own, and the results line totals what is
+shown. Quick chips for type and price write into the query the box shows, so nothing hidden
+is filtering; "Not in deck" and "Owned" are applied to what came back, and the line says how
+many they hid. A strip above the box says where the deck stands by role, in the coach's own
+counts, and pressing a role searches for it in the coach's own wording, so a chip and the
+coach never disagree.
 
 ## Preparing for accounts without building them
 
