@@ -47,8 +47,9 @@ A local-first Magic: The Gathering companion, built around the thing no existing
 getting a brand-new player to their first game.
 
 A 27-beat guided game teaches by playing — the user makes every decision while a coach
-explains it. Around it sit a card reference, a deck builder that validates against ten
-formats' real construction rules, and an offline life counter. Ban lists are read from
+explains it. Around it sit a card reference, an offline life counter, and a deck builder
+that validates against ten formats' real construction rules, prices a list in three
+markets, deals sample hands, tracks what you own and diffs saved versions. Ban lists are read from
 Scryfall at validation time rather than copied into the repo, because a stale copy fails
 **silently**. The land recommender was calibrated against decks that demonstrably work after
 the intuitive objective turned out to be measurably wrong — it recommended 27 lands in a

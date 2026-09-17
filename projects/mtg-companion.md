@@ -34,7 +34,10 @@ works unchanged. Full oracle text, official rulings, legality across ten formats
 printing, prices.
 
 **Decks.** Ten formats — six constructed, four in the Commander family — validated against
-each format's real construction rules as you build.
+each format's real construction rules as you build. Paste a list from anywhere, see it priced
+in three markets, group it by your own sections or by type in a list or a card grid, draw
+sample hands against it, mark what you own and what the rest would cost, and compare any two
+saved versions of it. A coach reads the list and says what it is short of, and why.
 
 **Play.** A life counter for games with physical cards. One to six players, commander damage
 per source, poison and other counters, phase tracker, full undo, works entirely offline.
@@ -139,8 +142,8 @@ forbid scripts from setting that header. That's documented rather than quietly i
 
 ## What running it found that the tests didn't
 
-153 tests pass, and the build is clean — and the app still rendered a blank page the first
-time I opened it in a browser.
+Early on, 153 tests passed and the build was clean — and the app still rendered a blank page
+the first time I opened it in a browser.
 
 `vite.config.js` set the base path only when `command === 'build'`, but `vite preview` runs
 as a *serve* command. Preview hosted at `/` while the built HTML pointed at
@@ -151,7 +154,61 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire.
+advances and that no console errors fire. That became the rule for everything after it: 712
+unit tests cover the logic, and thirteen browser specs drive the real interface for the parts
+a unit test cannot see.
+
+## Growing it into a real deck builder
+
+The tutorial was the differentiator; the deck builder is where the app has to earn daily
+use. It grew in deliberate steps, each one measured before it was called done.
+
+**Import had to work on the first try.** Pasting a 99-card list originally fired 89
+sequential requests and stalled. It now goes through Scryfall's collection endpoint in
+batches of 75, matches double-faced cards by their front face, and, when a Commander list
+arrives without a commander, offers the legendary creatures in it rather than refusing.
+
+**Prices are everywhere, and only from markets that exist.** Scryfall carries three
+(TCGplayer, Cardmarket, Cardhoarder), so those are the three shown, on every row, tile,
+section and card sheet, with foil and etched fallbacks marked as such. A vendor Scryfall does
+not carry is not invented.
+
+**Sections are the person's, not the app's.** A card can live in "Ramp" or "Wincons" rather
+than "Creatures"; renaming or dissolving a section moves its cards; the default grouping is
+by type with lands last, where people look for them. This was the first change to the saved
+schema, so it came with a versioned, additive migration chain and a rule that a newer file is
+left alone rather than downgraded.
+
+**Sample hands use the London mulligan** with a seeded generator, so a hand can be
+reproduced. The deck must be fully loaded before the first draw; a half-loaded library would
+quietly deal from fewer than 99 cards.
+
+**Ownership is keyed by oracle identity,** not by printing, so owning any copy of a card
+counts, and a deck reports "N to get · $X" against it.
+
+**History is stored as id-and-quantity lists,** capped at thirty versions with automatic
+checkpoints pruned first and the newest never pruned. Any two versions diff to added, removed
+and changed cards with a price delta, and removed cards are still named because the diff
+resolves every id across every version, not just the current deck.
+
+**Data safety was measured to the byte.** Browsers cap `localStorage` without saying where.
+The app measures its own use against the common limit, and when a write is refused it drops
+automatic checkpoints one at a time, using the write itself as the oracle, until the save
+lands or nothing is left to drop. A file that fails to parse is set aside and offered for
+download, never overwritten. The test for this found the browser's real limit by probing.
+
+**Performance was measured, not assumed.** A harness seeds a hundred distinct cards with
+real images and twenty-five versions, throttles the CPU four times, and times every screen a
+deck can be on, counting main-thread tasks over 50 ms separately. It found that each
+keystroke in the version-label box re-rendered the whole history. After the fix, a character
+costs 18 ms under throttle rather than 41, and a hundred-row list has 1,393 nodes rather than
+2,185. It also showed that memoising rows did nothing measurable for a quantity tap, which
+the README says plainly rather than claiming a win.
+
+The through-line is the same as the tutorial's: the coach's card classifiers are scored
+against Scryfall's own tags rather than trusted; the accessibility sweep treats a state it
+cannot reach as a failure, not a skip; and the perf harness reports the number that did not
+move alongside the ones that did.
 
 ## Known trade-offs
 
@@ -163,6 +220,8 @@ Carried in `ARCHITECTURE.md` with a *when to revisit* column, as with the other 
 | No cross-device sync | No accounts means no server, no data to breach, no hosting cost. Export/import is the escape hatch. |
 | Tutorial covers one matchup | One well-taught game teaches the fundamentals; more scenarios are content, not architecture. |
 | Prices are Scryfall's daily aggregate | Live pricing needs a commercial feed. Daily is right for "is this deck expensive". |
+| Three price markets, not every vendor | Only markets Scryfall carries are shown. Showing a vendor's name over a guessed number would look authoritative while being wrong. |
+| Saved data lives in one browser's storage | A few megabytes, with the actual cap unknown until a write fails. The app measures use, recovers from a refused save, and nudges toward a backup rather than pretending the limit is not there. |
 
 ## Legal
 
