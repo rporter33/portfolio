@@ -154,8 +154,8 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire. That became the rule for everything after it: 767
-unit tests cover the logic, and fifteen browser specs drive the real interface for the parts
+advances and that no console errors fire. That became the rule for everything after it: 803
+unit tests cover the logic, and seventeen browser specs drive the real interface for the parts
 a unit test cannot see.
 
 ## Growing it into a real deck builder
@@ -217,6 +217,33 @@ marker sets the commander.
 the app checks for a newer one shortly after load and when the tab comes back into view,
 offering a reload. This exists because the fix above was retried on the previous build and
 nothing on screen said so.
+
+## A first deck for someone who has never built one
+
+The deck builder assumed you knew what you wanted. The first-deck flow does not. Four
+short steps on the Decks tab, also reachable from Learn.
+
+A **colour dial** walks the five colours in wheel order and names the pair between any two,
+so "Blue and Black — Dimir" appears as you drag. It is a native range input over a
+wheel-coloured strip, which makes it keyboard-driven and screen-reader-readable for free;
+the five enemy pairs the strip cannot reach are chips beside it. Each colour has a page —
+what it cares about, how it wins, what it is bad at, three cards that sum it up — and the
+screen says that writing is the app's own. **Four questions** with two honest answers each
+lean the dial toward the colours that play that way, and it can always be dragged back.
+
+**Commanders** come two ways: a recommended list written for this app, two per colour choice
+with a one-line reason, marked as a recommendation rather than a ranking and verified against
+Scryfall by a script; and the most played list, live from Scryfall's popularity rank for
+exactly those colours. Choosing one creates the deck. Then a **starting list by role** —
+lands, ramp, draw, removal, "does your thing" — each with a target that adds up to 99, a
+progress bar fed by the coach's own classifiers, and popular cards in the deck's colours
+under a price cap. "Fill the rest" completes the skeleton and the deck opens in the editor,
+legal and complete.
+
+Nothing in it is invented. The staples come from Scryfall by the same oracle tags the coach's
+classifiers were scored against, with a plainer fallback per role in case a tag slug changes.
+The result is a deck the coach would call sensible rather than one anyone would call
+optimised, and the screen says the numbers are a guide, not a rule.
 
 ## Preparing for accounts without building them
 
