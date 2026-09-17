@@ -154,8 +154,8 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire. That became the rule for everything after it: 809
-unit tests cover the logic, and eighteen browser specs drive the real interface for the parts
+advances and that no console errors fire. That became the rule for everything after it: 819
+unit tests cover the logic, and nineteen browser specs drive the real interface for the parts
 a unit test cannot see.
 
 ## Growing it into a real deck builder
@@ -256,6 +256,26 @@ is filtering; "Not in deck" and "Owned" are applied to what came back, and the l
 many they hid. A strip above the box says where the deck stands by role, in the coach's own
 counts, and pressing a role searches for it in the coach's own wording, so a chip and the
 coach never disagree.
+
+## A visual system with a paper trail
+
+Two references were written for the app and now live in its repository: a universe and design
+reference, and a set reference for *Reality Fracture*, with an original asset pack built from
+them. The shell became the references' core theme, charcoal and parchment with restrained
+antique gold, in five self-hosted open fonts under the SIL Open Font License. The references'
+tokens sit in the stylesheet verbatim under their own names and the app's semantic tokens map
+onto them, so a script can diff the documents against the stylesheet and say where they
+disagree. Every emblem and ornament is the pack's own interface design, never an official
+glyph, and every emblem is shown with a text label beside it, as both references require.
+
+*Reality Fracture* is the first curated set theme: an indigo and silver shell with cyan as the
+one accent, the set's own illustration and voice on the banner, and Hexhaven's five schools,
+which are the five allied colour pairs, beside the colours in the first-deck flow with their
+disciplines, virtues and horrors. It applies app-wide while the set is the season's focus and
+retires by itself when the season moves on. The banner says the colours and lore are the app's
+reading of public previews rather than official, and the set's alias is accepted as input and
+never shown. A browser spec drives both shells on a desktop and a phone and fails if any asset
+request does.
 
 ## Preparing for accounts without building them
 
