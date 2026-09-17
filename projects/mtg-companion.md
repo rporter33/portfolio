@@ -154,8 +154,8 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire. That became the rule for everything after it: 838
-unit tests cover the logic, and twenty browser specs drive the real interface for the parts
+advances and that no console errors fire. That became the rule for everything after it: 846
+unit tests cover the logic, and twenty-one browser specs drive the real interface for the parts
 a unit test cannot see.
 
 ## Growing it into a real deck builder
@@ -269,8 +269,17 @@ accents folded so "jotun" finds Jötun Grunt from a phone keyboard, headers that
 28" while the price steps aside, a miss that offers to search every card instead, and a
 search that never survives leaving the tab, because a deck that opens filtered to three cards
 looks like data loss. The bar also narrows the deck to what is still to buy, and carries a
-hairline in the deck's colours. Folding sections into a cascade of buttons is the next commit,
-already decided down to what the open section does when a card is added from another tab.
+hairline in the deck's colours.
+
+The cascade followed as its own commit: one button per section pinned under the search, one
+section open at a time, a second tap to bring the deck back, remembered per deck without
+counting as an edit. Each button carries a dot for a legality problem and the number of cards
+still to buy, so a folded section can never hide either. The case that took the most care was
+a card added on another tab: its section opens and the row is outlined for a moment, but cards
+that come back with a restored version open everything instead, because hiding most of what
+just came back is the wrong answer to "what changed". A four-lens adversarial review of the
+search commit found the shortcut key was page-wide, a WCAG failure, and it was scoped to the
+list before anything shipped.
 
 Building it found a bug that had nothing to do with search: the editor's seven-tab strip was
 wider than a 390px phone and pushed the whole screen sideways. It now scrolls within itself.
