@@ -154,7 +154,7 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire. That became the rule for everything after it: 864
+advances and that no console errors fire. That became the rule for everything after it: 882
 unit tests cover the logic, and twenty-two browser specs drive the real interface for the parts
 a unit test cannot see.
 
@@ -310,6 +310,24 @@ cap that gives lands their room first; and the first-deck steps could be revisit
 commander was chosen, so a dial moved to new colours fetched staples the deck could not play.
 The starting list now follows the commander's identity whatever the dial says, and a clash is
 resolved out loud with two ways through.
+
+The three larger milestones from that review followed in order, each its own commit. The
+first-deck flow became something you can come back to: every step has an address, a reload
+lands where you were, the back button retraces the steps, an unfinished deck is offered back
+from the Decks screen, and choosing the same commander again continues the same deck rather
+than making a second one. Then the starting list learned what the deck is for: two or three
+plans per colour choice, written by the app and labelled as its own suggestion, steer the
+"does your thing" role; every listed card says why it is there from the evidence that put it
+there and claims no synergy that was not checked; and a purchase budget for the cards you do
+not own sits beside the per-card cap, distinct from what the deck is worth. Last, practice:
+a drawn hand is read back as observations, never verdicts, and one change to the list is
+proposed with the odds before and after and the assumptions written next to the numbers.
+Making it keeps the list as it was in History, one restore away.
+
+Two more bugs surfaced under that work, neither in the review: the Decks screen read its list
+once at mount and missed a deck the flow saved beneath it, and the deck's add function changed
+the quantity on an entry the previous deck still shared, so a version held by reference
+could change under the caller.
 
 ## A visual system with a paper trail
 
