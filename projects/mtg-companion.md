@@ -154,8 +154,8 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire. That became the rule for everything after it: 712
-unit tests cover the logic, and thirteen browser specs drive the real interface for the parts
+advances and that no console errors fire. That became the rule for everything after it: 767
+unit tests cover the logic, and fifteen browser specs drive the real interface for the parts
 a unit test cannot see.
 
 ## Growing it into a real deck builder
@@ -204,6 +204,45 @@ keystroke in the version-label box re-rendered the whole history. After the fix,
 costs 18 ms under throttle rather than 41, and a hundred-row list has 1,393 nodes rather than
 2,185. It also showed that memoising rows did nothing measurable for a quantity tap, which
 the README says plainly rather than claiming a win.
+
+**Import reads what other sites write.** An Archidekt export puts the printing before
+the category, `(soc) 180 [Creature]`, and the first parser only stripped a printing at the
+very end of a line, so every name kept its set code and a whole deck crawled through the
+fuzzy endpoint one request at a time. Markers are now peeled in any order and each one is
+used: the printing goes to Scryfall as a set and collector number, which is exact and
+returns the card the person owns; a category they made becomes a section; the commander
+marker sets the commander.
+
+**The app knows which build it is.** Every build carries its commit and publish time, and
+the app checks for a newer one shortly after load and when the tab comes back into view,
+offering a reload. This exists because the fix above was retried on the previous build and
+nothing on screen said so.
+
+## Preparing for accounts without building them
+
+The next step for this app is a version people sign in to. Two things had to change first,
+and both were cheap now and expensive later.
+
+**Where you are is in the address bar.** Navigation lived in React state: a deck had no link,
+the back button did nothing useful, a reload lost the screen. Hash routes fix that with no
+server, which is what GitHub Pages offers. A deck's analysis tab is `#/decks/<id>/analysis`,
+a search is `#/cards?q=…`, and the card sheet is `?card=<id>` on any of them, as an overlay:
+opening it pushes a history entry so the back button closes it. The parse and build
+functions are pure and round-trip every shape; the browser spec drives the real address bar
+through open, reload, back, forward, deep links and junk.
+
+**Each deck is a document of its own.** The store was one blob rewritten whole on every
+quantity tap, and last-write-wins on a single document is exactly what a sync backend cannot
+reconcile. Now a root document holds the small whole-app things and each deck sits under its
+own key with its own `updatedAt`. A save writes the one deck that changed; a corrupt root no
+longer takes the decks with it; the old blob is split on first read and only rewritten once
+every deck has landed. The backup file's shape is unchanged. The backend interface is a keyed
+string store, so a server is one swap and carries the timestamps with it.
+
+The routing change found a real bug on its first run through the existing specs: React
+flushes a route change synchronously while a state update from the same effect is still
+batched, so one render saw the new URL with the old deck list and sent every new deck
+straight back to the list. The check now reads storage, not state.
 
 The through-line is the same as the tutorial's: the coach's card classifiers are scored
 against Scryfall's own tags rather than trusted; the accessibility sweep treats a state it
