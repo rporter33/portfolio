@@ -154,8 +154,8 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire. That became the rule for everything after it: 819
-unit tests cover the logic, and nineteen browser specs drive the real interface for the parts
+advances and that no console errors fire. That became the rule for everything after it: 838
+unit tests cover the logic, and twenty browser specs drive the real interface for the parts
 a unit test cannot see.
 
 ## Growing it into a real deck builder
@@ -256,6 +256,24 @@ is filtering; "Not in deck" and "Owned" are applied to what came back, and the l
 many they hid. A strip above the box says where the deck stands by role, in the coach's own
 counts, and pressing a role searches for it in the coach's own wording, so a chip and the
 coach never disagree.
+
+**Finding a card in a hundred is a design question, so it was designed first.** A deck
+list with no way to search or fold it is fine at forty cards and useless at a hundred. Rather
+than build the obvious thing, the feature went through a written design pass: three
+independent designs from three points of view, a phone at a game table, a builder at a desk
+and the least change to the code, scored by three judges on fit, phone use, accessibility,
+performance, testability and scope. Then five more reviewers combed the code for every fork
+the owner would have to choose, and the owner answered twenty-seven questions before a line
+was written: a bar pinned above the list, filtering as you type on names and type lines with
+accents folded so "jotun" finds Jötun Grunt from a phone keyboard, headers that read "2 of
+28" while the price steps aside, a miss that offers to search every card instead, and a
+search that never survives leaving the tab, because a deck that opens filtered to three cards
+looks like data loss. The bar also narrows the deck to what is still to buy, and carries a
+hairline in the deck's colours. Folding sections into a cascade of buttons is the next commit,
+already decided down to what the open section does when a card is added from another tab.
+
+Building it found a bug that had nothing to do with search: the editor's seven-tab strip was
+wider than a 390px phone and pushed the whole screen sideways. It now scrolls within itself.
 
 ## A visual system with a paper trail
 
