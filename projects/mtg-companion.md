@@ -154,8 +154,8 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire. That became the rule for everything after it: 846
-unit tests cover the logic, and twenty-one browser specs drive the real interface for the parts
+advances and that no console errors fire. That became the rule for everything after it: 864
+unit tests cover the logic, and twenty-two browser specs drive the real interface for the parts
 a unit test cannot see.
 
 ## Growing it into a real deck builder
@@ -283,6 +283,33 @@ list before anything shipped.
 
 Building it found a bug that had nothing to do with search: the editor's seven-tab strip was
 wider than a 390px phone and pushed the whole screen sideways. It now scrolls within itself.
+
+## A second opinion, weighed rather than obeyed
+
+A review of the codebase arrived from another model, written as a handoff: three defects, three
+larger improvements and a proposal for a new colour-picking interface. Every claim was checked
+against the source before any of it was accepted. The three defects held up, and one was worse
+than described: the playtest screen told a 37-land deck its opening seven would hold two lands
+"about 15% of the time" when the truth is about 85%, because the screen showed the complement of
+the number it described. The fix is one expression; the test that guards it works the
+hypergeometric out independently rather than repeating the code under test.
+
+The larger findings were right about the model and wrong about the remedy. The analysis counted
+a two-mana rock as an untapped land and solved every colour for a single pip. It now reads the
+mana base by kind: lands are there when drawn, a rock or dork comes online the turn after it is
+cast, a ritual is not a source at all, and every spell is an ask of so many pips by the turn of
+its mana value, with "needed" solved for the hardest ask from the ninety-nine cards the commander
+is not among. The screen writes its assumptions down. The proposed journey record and the
+separate colour-picker application were declined as parallel structures for state the app
+already keeps; the resumable flow they were reaching for needs two fields, not a schema.
+
+Smaller things from the same pass: a Commander pod of three or more never skips the first draw
+(rule 103.8c), so the playtest now asks how many are at the table and defaults to a pod; "fill
+the rest" could push a list past 99 when one role was already over its target, and now takes a
+cap that gives lands their room first; and the first-deck steps could be revisited after a
+commander was chosen, so a dial moved to new colours fetched staples the deck could not play.
+The starting list now follows the commander's identity whatever the dial says, and a clash is
+resolved out loud with two ways through.
 
 ## A visual system with a paper trail
 
