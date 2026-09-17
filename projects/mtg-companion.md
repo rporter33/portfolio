@@ -154,7 +154,7 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire. That became the rule for everything after it: 882
+advances and that no console errors fire. That became the rule for everything after it: 887
 unit tests cover the logic, and twenty-two browser specs drive the real interface for the parts
 a unit test cannot see.
 
@@ -323,6 +323,13 @@ not own sits beside the per-card cap, distinct from what the deck is worth. Last
 a drawn hand is read back as observations, never verdicts, and one change to the list is
 proposed with the odds before and after and the assumptions written next to the numbers.
 Making it keeps the list as it was in History, one restore away.
+
+The last milestone opened the flow to sixty-card formats. Commander stays the recommendation,
+but Standard, Pioneer and Modern sit beside it: the third step becomes a start button instead
+of a commander, and the starting list follows the deck's own format, with its own skeleton,
+searches legal in that format, and a fill that takes up to four copies of a card and never
+passes sixty. A deck keeps its format; changing the chip with a deck started is resolved out
+loud, the same way a change of colours is.
 
 Two more bugs surfaced under that work, neither in the review: the Decks screen read its list
 once at mount and missed a deck the flow saved beneath it, and the deck's add function changed
