@@ -154,8 +154,8 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire. That became the rule for everything after it: 887
-unit tests cover the logic, and twenty-two browser specs drive the real interface for the parts
+advances and that no console errors fire. That became the rule for everything after it: 981
+unit tests cover the logic, and twenty-three browser specs drive the real interface for the parts
 a unit test cannot see.
 
 ## Growing it into a real deck builder
@@ -381,6 +381,93 @@ Every twenty-odd requests, a minute lost, four times over: the pace was steady a
 fast for whatever window applied, which is what sent the third fix looking for the pace
 rather than guessing it. The last line is the one that matters, and it was the same on
 every run: every name known to Scryfall, every plan with a search that answers.
+
+## A table that plays by the rules
+
+A second outside brief followed the first, this time about learning to play with physical
+cards. Its central claim was that the scripted tutorial, for all that it teaches, could not
+tell a right move from a wrong one: it advances when the card you click matches the card the
+script expected, and every board is an authored picture. The brief listed ten findings. I
+checked each against the code before planning, and every one held. Blocking was described as
+tapping. A land was played in the draw step and attacks were declared in a main phase. Every
+permanent on both sides untapped whenever the active player changed. A six-mana creature was
+cast without its mana being spent, and the opponent cast a four-mana giant off three
+Mountains. A beat titled "A two-for-one" described a one-for-one in its own words. And the
+brief missed some: the Commander lesson credited the ban list to a body that stopped keeping
+it in 2024, the stack quiz's premise contradicted its answer, colourless mana was never told
+apart from generic, and the written lessons had no tests at all.
+
+The first commit fixed what was live, with tests that hold the boards to the rules they
+teach: a phase per beat, every action in its step, untapping only in the controller's untap
+step, every cast tapping its cost. Then the table.
+
+**A model, not a rules engine.** The repo's own architecture notes carry a standing objection
+to "a rules engine", and it stands. What was built is a small deterministic model over a
+listed pool of nineteen green and red cards: one pure function from a state and an action to
+the next state and its events, or a refusal with a reason a coach can read out. Card
+instances have identities of their own, so two Forests are two objects. Casting is a visible
+transaction: announce, tap sources, put mana on each part of the cost, commit once, and the
+spell goes to the stack rather than the battlefield. Priority goes round; a spell resolves
+only when both players pass in succession; mana empties with the step; a cast creature
+arrives summoning sick; a spell whose target has gone does not resolve; lethal damage and zero
+life are checked before anyone gets priority. What the table does not model is written in one
+file and refused by name, never approximated.
+
+<p>
+  <img src="images/mtg-companion/practice-resolved.png" width="300" alt="The practice table at phone width after the first lesson's cast resolved. The opponent's strip shows 20 life and nothing on their battlefield; the stack reads empty; your battlefield shows Grizzly Bears marked summoning sick beside a Forest and a Mountain both marked tapped; your strip shows priority and 20 life; the mana pool reads empty and the hand is empty. Below, the coach says the creature resolved, the lands are still tapped and the mana is gone, then asks what untaps next turn.">
+  <img src="images/mtg-companion/practice-stack.png" width="300" alt="The same table in the response lesson. The stack lists Giant Growth on top, yours, targeting Grizzly Bears, and Shock beneath it, theirs, also targeting Grizzly Bears. The journal beneath the board reads: your prediction was right; Forest tapped for green; you paid one green; you cast Giant Growth. The coach explains that two spells are on the stack with yours on top and asks for a pass.">
+</p>
+
+*Left: the first lesson, resolved. Right: two spells on the stack in the response lesson, the
+learner's on top.*
+
+**Lessons judged from consequences.** Three lessons, each a guided walk, then the same skill
+on a different board with no highlights, then real cards as a self-report: lands, mana and a
+first creature; attacking, blocking and damage; responding and the stack. A goal is a question
+about the state, so any legal payment counts. The combat and response lessons ask their
+prediction before the moment it is about and take one answer per run, because a guess made
+after the result is not a prediction; a wrong one is explained and left unmet. Viewed,
+practiced and demonstrated are kept apart, and demonstrated means two exercises of a lesson
+done without a hint, which the screen calls a default to try with learners rather than a
+measure of mastery. Paper practice is what the learner told us, listed and not counted.
+
+**Motion from events, and a table that resumes.** Every event has a sentence, read into a live
+region and kept as a journal; a card is marked for a moment after a committed event and never
+with motion reduced, so the same run gives the same information either way. The saved run is
+the action log, which replays to the same state: a reload picks up at the last committed
+action, undo is a step back through the same log, and a replay renders the table as it was
+without touching the game. Taking that apart found a bug elsewhere: the storage probe treated
+a write refused for lack of room as "no storage" and served an empty memory store, so a
+browser that had merely run out of space showed no decks.
+
+<p>
+  <img src="images/mtg-companion/practice-explorer.png" width="300" alt="The colour explorer at phone width. A ring of five wedges, green and white lit and the other three dim, with a 2 in the centre. Below it, five labelled toggle buttons: White and Green pressed. Under those, a panel headed Selesnya, White and Green, reading: go wide and go together, tokens, anthems, and life gain that keeps the team alive.">
+  <img src="images/mtg-companion/practice-response-reduced-motion.png" width="300" alt="The response lesson with motion reduced: the same board and the same words, with no cue applied to any card. The header shows Their turn 2, Main phase, You have priority; the stack lists Shock, theirs, targeting Grizzly Bears; the coach asks the two predictions before anything can be done.">
+</p>
+
+*Left: the colour explorer, any number of colours, handing one or two into the first-deck
+flow. Right: the same lesson with motion reduced; nothing said changes.*
+
+**Free play from the same model.** Three thirty-card practice decks from the pool, which every
+screen calls practice decks and not legal decks. A game is built from two decks, a seed and a
+mode, so its shuffles come from the seed and its log replays. Both players start on a London
+mulligan, first player first, one card owed to the bottom per mulligan, and the first player
+skips the draw. Solo is against an opponent whose rules are one sentence on the screen. Two
+people at one screen is the other mode: the table waits for whoever it says it is waiting
+for, and that person's hand stays hidden until they reveal it. The strongest test the model
+gets is five whole games between two copies of the simple opponent, with the invariants
+checked after every action.
+
+<img src="images/mtg-companion/practice-game-desktop.png" alt="Free play on a desktop. Header: a game against the practice opponent, Forests and Fangs against Goblins and Fire, opponent's turn 2, upkeep, you have priority. The opponent at 20 life has a Raging Goblin and a Mountain; the stack is empty; you at 19 life have two Forests, an empty mana pool and a hand of six drawn cards. The journal beside the board reads: your opponent begins turn 2; Mountain untapped; Raging Goblin untapped; upkeep; your opponent passed priority. Controls below: pass priority, end the turn, concede.">
+
+*A game against the practice opponent on a desktop, the journal beside the board.*
+
+All of it lives at an address nothing links to yet, beside the Learn tab, so it could be
+tried on a phone from the live site without changing anything a new player currently meets.
+Every primary source the brief cited was unreachable from the build session, so the rules the
+model encodes are cited by section number in the progress record for spot-checking, and the
+card records are checked on the owner's machine by the same kind of script as the first-deck
+names. No novice has tried it yet; the observation script is written and the record says so.
 
 ## A visual system with a paper trail
 
