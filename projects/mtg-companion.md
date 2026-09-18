@@ -360,6 +360,28 @@ is moving to. The app itself never hit this, because its single queue was alread
 it was the one tool that fires a hundred requests in a row that had to learn the same
 manners.
 
+The run that showed the second fix was not enough, on a home connection, with the output
+as the script printed it:
+
+```
+> mtg-companion@0.1.0 firstdeck:verify
+> node scripts/verify-first-deck.mjs
+
+Scryfall answered 429 after 21 requests; waiting 60s, then trying again (1 of 5)
+Scryfall answered 429 after 42 requests; waiting 60s, then trying again (1 of 5)
+commander: 45 plan searches checked
+Scryfall answered 429 after 66 requests; waiting 60s, then trying again (1 of 5)
+Scryfall answered 429 after 91 requests; waiting 60s, then trying again (1 of 5)
+modern: 45 plan searches checked
+45 names checked, 90 plan searches checked.
+All good.
+```
+
+Every twenty-odd requests, a minute lost, four times over: the pace was steady and still too
+fast for whatever window applied, which is what sent the third fix looking for the pace
+rather than guessing it. The last line is the one that matters, and it was the same on
+every run: every name known to Scryfall, every plan with a search that answers.
+
 ## A visual system with a paper trail
 
 Two references were written for the app and now live in its repository: a universe and design
