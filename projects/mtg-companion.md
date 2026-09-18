@@ -336,6 +336,21 @@ once at mount and missed a deck the flow saved beneath it, and the deck's add fu
 the quantity on an entry the previous deck still shared, so a version held by reference
 could change under the caller.
 
+The verify script was the last thing to break. It checks every recommended commander and
+signature card by exact name and every plan's searches for an answer, and the sixty-card
+work doubled the searches, so the first run on a real connection was cut off by a 429
+partway through and stopped as though a search were wrong. Three commits followed, each
+made against what the run before it showed. The first retried, honouring `Retry-After`,
+and finished after two one-minute waits. The second slowed the pace to under three a second
+on the theory that the limit was a burst, and was still cut off every twenty or so requests,
+a minute lost each time. Scryfall's published ask is ten a second; whatever window applied
+to that connection was tighter and not written down anywhere. The third stopped guessing:
+the gap between requests doubles every time Scryfall says stop, so a run settles at the
+pace it is allowed and keeps it, and the wait message says how far it got and what pace it
+is moving to. The app itself never hit this, because its single queue was already gentle;
+it was the one tool that fires a hundred requests in a row that had to learn the same
+manners.
+
 ## A visual system with a paper trail
 
 Two references were written for the app and now live in its repository: a universe and design
