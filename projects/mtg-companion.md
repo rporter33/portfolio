@@ -331,6 +331,15 @@ searches legal in that format, and a fill that takes up to four copies of a card
 passes sixty. A deck keeps its format; changing the chip with a deck started is resolved out
 loud, the same way a change of colours is.
 
+<p>
+  <img src="images/mtg-companion/first-deck-format-chips.png" width="300" alt="The colours step of the first-deck flow at phone width. Above the colour dial, a card headed What kind of deck? offers four chips: Commander, Standard, Pioneer and Modern. Modern is chosen, and a line beneath explains that Modern is a sixty-card, two-player format with up to four copies of a card and no commander, so the commander step becomes a start button. The dial sits on Dimir.">
+  <img src="images/mtg-companion/first-deck-start-step.png" width="300" alt="The third step of the flow, now labelled Start rather than Commander. A card headed A Modern deck in Dimir (Blue and Black) says there is no commander in Modern, that the deck is sixty cards with up to four copies, and gives the skeleton of twenty-four lands, six card draw and eight removal as a guide rather than a rule, above one button: Start a Modern deck in Dimir (Blue and Black).">
+</p>
+
+*The format chips on the colours step, and the Start step that stands in for the commander
+step once a sixty-card format is chosen. Taking the first shot caught the intro line still
+promising that nothing is saved "until you choose a commander"; it now follows the format.*
+
 Two more bugs surfaced under that work, neither in the review: the Decks screen read its list
 once at mount and missed a deck the flow saved beneath it, and the deck's add function changed
 the quantity on an entry the previous deck still shared, so a version held by reference
