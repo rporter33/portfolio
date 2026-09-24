@@ -13,6 +13,18 @@ the source is private, because it touches client and candidate data — happy to
 any of it directly. MTG Companion has nothing confidential in it, so that one is public and
 linked below.
 
+Every write-up opens with a short *At a glance* summary — problem, what I built, result — so
+you can get the gist of each in under a minute and read further only where it's useful.
+
+## At a glance
+
+| Project | What it is | Headline result | Source |
+|---|---|---|---|
+| [Excel CES](projects/excel-ces.md) | Phone-first estimating app that replaced a roofing contractor's ~700-formula workbook | Matched five real completed workbooks at **0.00 error** | Private |
+| [Sourcing Engines](projects/sourcing-engines.md) | Trade-license candidate discovery and an LLM role-fit scorer for my recruiting practice | Calibration on **104 real interviews** overturned the rubric's central assumption | Private |
+| [MTG Companion](projects/mtg-companion.md) | Offline Magic: The Gathering app that teaches new players by playing | **1,600+ unit tests** and 33 browser specs gating every deploy | [Public](https://github.com/rporter33/mtg-companion) |
+| [Anagnosis](projects/anagnosis.md) | Offline Ancient Greek reader, from the alphabet to Homer | No accounts or server; learners own their progress as a file | Private |
+
 ---
 
 ## Projects
@@ -34,9 +46,9 @@ against a role using only job-relevant criteria.
 
 The first pulls ~27,000 active Colorado trade licenses from the state's public open-data
 API and detects newly licensed individuals on each run. The second is an LLM scoring
-engine whose rubric was calibrated against **104 real interviews**, then re-checked blind on
-the same corpus: it correctly gated **20/20** commission-averse candidates and rated **18/19** actual
-hires viable, with a 36-point score separation between the two groups.
+engine whose rubric was calibrated against **104 real interviews**, then re-checked blind
+on the same corpus: it correctly gated **20/20** commission-averse candidates and rated
+**18/19** actual hires viable, with a 36-point score separation between the two groups.
 
 `Python` · `Claude API (Haiku)` · `Socrata open data` · `structured LLM output` · `corpus calibration`
 
@@ -53,7 +65,10 @@ markets, deals sample hands, tracks what you own and diffs saved versions. Ban l
 Scryfall at validation time rather than copied into the repo, because a stale copy fails
 **silently**. The land recommender was calibrated against decks that demonstrably work after
 the intuitive objective turned out to be measurably wrong — it recommended 27 lands in a
-60-card deck.
+60-card deck. More than 1,600 unit tests and 33 browser specs back it, and the browser suite
+gates every deploy.
+
+<img src="projects/images/mtg-companion/practice-game-desktop.png" width="640" alt="MTG Companion's practice table on a desktop: the opponent's Raging Goblin and Mountain above an empty stack, the player's two Forests and a hand of six cards below, and a journal of each step beside the board.">
 
 `React` · `Vite` · `PWA` · `IndexedDB` · `Scryfall API` · `Vitest` · `GitHub Pages`
 

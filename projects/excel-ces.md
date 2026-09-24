@@ -3,8 +3,17 @@
 A mobile-first progressive web app that replaced a Denver-area roofing contractor's
 cost-estimating workbook.
 
-**Stack:** Next.js 15 (App Router) · Prisma 6 · PostgreSQL via Supabase · Clerk v7 ·
-Tailwind CSS · Vitest · Vercel
+## At a glance
+
+- **Problem:** every job was priced from a ~700-formula Excel workbook that only worked at a
+  desk, drifted between copies, and kept no record of what a price was when a bid went out.
+- **What I built:** a phone-first web app with a tested pricing engine, five-role access
+  control, a price-change audit log and a printable bid sheet.
+- **Result:** the engine matched five real completed workbooks at **0.00 error** before anyone
+  was asked to trust it, and saved estimates keep the prices they were bid at.
+- **Source:** private (client data) — happy to walk through it.
+- **Stack:** Next.js 15 (App Router) · Prisma 6 · PostgreSQL via Supabase · Clerk v7 ·
+  Tailwind CSS · Vitest · Vercel
 
 ---
 

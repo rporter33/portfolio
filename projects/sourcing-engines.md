@@ -5,7 +5,18 @@ don't have a LinkedIn profile. The second reads a candidate's materials and scor
 fit for a specific role — without touching anything a hiring process is legally forbidden
 to consider.
 
-**Stack:** Python · Claude API · Socrata open data · structured LLM output · corpus calibration
+## At a glance
+
+- **Problem:** the best tradespeople aren't job-hunting or on LinkedIn, and screening
+  candidates with an LLM is a legal risk if it's done carelessly.
+- **What I built:** a pipeline over ~27,000 active Colorado trade licenses that surfaces the
+  newly licensed on each run, and a Claude Haiku scorer that rates role fit on job-relevant
+  signals only.
+- **Result:** calibrating on 104 real interviews overturned the rubric's central assumption —
+  commission *aversion*, not inexperience, was the signal. A blind in-sample re-check gated
+  **20/20** commission-averse candidates and rated **18/19** hires viable.
+- **Source:** private (candidate data) — every figure here is aggregate.
+- **Stack:** Python · Claude API · Socrata open data · structured LLM output · corpus calibration
 
 ---
 
