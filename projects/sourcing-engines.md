@@ -14,7 +14,7 @@ to consider.
   signals only.
 - **Result:** calibrating on 104 real interviews overturned the rubric's central assumption —
   commission *aversion*, not inexperience, was the signal. A blind in-sample re-check gated
-  **20/20** commission-averse candidates and rated **18/19** hires viable.
+  **20/20** commission-averse candidates.
 - **Source:** private (candidate data) — every figure here is aggregate.
 - **Stack:** Python · Claude API · Socrata open data · structured LLM output · corpus calibration
 
@@ -123,12 +123,11 @@ candidates who arrive after the rubric was fixed.
 | Check | Result |
 |---|---|
 | Commission-averse candidates correctly gated | **20 / 20 (100%)** |
-| Real hires scored viable | **18 / 19 (95%)** |
 | Score separation | hires avg **66** vs. comp-averse avg **30** |
 
-The single apparent miss was not a miss. The one offer-stage candidate the scorer declined
-to route to the primary role was routed to canvassing instead — which is what actually
-happened to that person in reality.
+Where the scorer disagreed with a real hiring decision, it was worth checking why. An
+offer-stage candidate it declined to route to the primary role was routed to canvassing
+instead — which is what actually happened to that person in reality.
 
 ### One conclusion I had to write down against my own interest
 
