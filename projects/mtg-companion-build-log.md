@@ -1,0 +1,396 @@
+# MTG Companion — build log
+
+The development history behind the [MTG Companion write-up](mtg-companion.md), in the order
+it happened. The write-up covers what the app is and the decisions behind it; this is the
+detail for anyone who wants to see how each piece was built, measured and corrected.
+
+**Source:** [github.com/rporter33/mtg-companion](https://github.com/rporter33/mtg-companion)
+
+- [Growing it into a real deck builder](#growing-it-into-a-real-deck-builder)
+- [A first deck for someone who has never built one](#a-first-deck-for-someone-who-has-never-built-one)
+- [A second opinion, weighed rather than obeyed](#a-second-opinion-weighed-rather-than-obeyed)
+- [A table that plays by the rules](#a-table-that-plays-by-the-rules)
+- [A visual system with a paper trail](#a-visual-system-with-a-paper-trail)
+- [Preparing for accounts without building them](#preparing-for-accounts-without-building-them)
+
+---
+
+## Growing it into a real deck builder
+
+The tutorial was the differentiator; the deck builder is where the app has to earn daily
+use. It grew in deliberate steps, each one measured before it was called done.
+
+**Import had to work on the first try.** Pasting a 99-card list originally fired 89
+sequential requests and stalled. It now goes through Scryfall's collection endpoint in
+batches of 75, matches double-faced cards by their front face, and, when a Commander list
+arrives without a commander, offers the legendary creatures in it rather than refusing.
+
+**Prices are everywhere, and only from markets that exist.** Scryfall carries three
+(TCGplayer, Cardmarket, Cardhoarder), so those are the three shown, on every row, tile,
+section and card sheet, with foil and etched fallbacks marked as such. A vendor Scryfall does
+not carry is not invented.
+
+**Sections are the person's, not the app's.** A card can live in "Ramp" or "Wincons" rather
+than "Creatures"; renaming or dissolving a section moves its cards; the default grouping is
+by type with lands last, where people look for them. This was the first change to the saved
+schema, so it came with a versioned, additive migration chain and a rule that a newer file is
+left alone rather than downgraded.
+
+**Sample hands use the London mulligan** with a seeded generator, so a hand can be
+reproduced. The deck must be fully loaded before the first draw; a half-loaded library would
+quietly deal from fewer than 99 cards.
+
+**Ownership is keyed by oracle identity,** not by printing, so owning any copy of a card
+counts, and a deck reports "N to get · $X" against it.
+
+**History is stored as id-and-quantity lists,** capped at thirty versions with automatic
+checkpoints pruned first and the newest never pruned. Any two versions diff to added, removed
+and changed cards with a price delta, and removed cards are still named because the diff
+resolves every id across every version, not just the current deck.
+
+**Data safety was measured to the byte.** Browsers cap `localStorage` without saying where.
+The app measures its own use against the common limit, and when a write is refused it drops
+automatic checkpoints one at a time, using the write itself as the oracle, until the save
+lands or nothing is left to drop. A file that fails to parse is set aside and offered for
+download, never overwritten. The test for this found the browser's real limit by probing.
+
+**Performance was measured, not assumed.** A harness seeds a hundred distinct cards with
+real images and twenty-five versions, throttles the CPU four times, and times every screen a
+deck can be on, counting main-thread tasks over 50 ms separately. It found that each
+keystroke in the version-label box re-rendered the whole history. After the fix, a character
+costs 18 ms under throttle rather than 41, and a hundred-row list has 1,393 nodes rather than
+2,185. It also showed that memoising rows did nothing measurable for a quantity tap, which
+the README says plainly rather than claiming a win.
+
+**Import reads what other sites write.** An Archidekt export puts the printing before
+the category, `(soc) 180 [Creature]`, and the first parser only stripped a printing at the
+very end of a line, so every name kept its set code and a whole deck crawled through the
+fuzzy endpoint one request at a time. Markers are now peeled in any order and each one is
+used: the printing goes to Scryfall as a set and collector number, which is exact and
+returns the card the person owns; a category they made becomes a section; the commander
+marker sets the commander.
+
+**The app knows which build it is.** Every build carries its commit and publish time, and
+the app checks for a newer one shortly after load and when the tab comes back into view,
+offering a reload. This exists because the fix above was retried on the previous build and
+nothing on screen said so.
+
+## A first deck for someone who has never built one
+
+The deck builder assumed you knew what you wanted. The first-deck flow does not. Four
+short steps on the Decks tab, also reachable from Learn.
+
+A **colour dial** walks the five colours in wheel order and names the pair between any two,
+so "Blue and Black — Dimir" appears as you drag. It is a native range input over a
+wheel-coloured strip, which makes it keyboard-driven and screen-reader-readable for free;
+the five enemy pairs the strip cannot reach are chips beside it. Each colour has a page —
+what it cares about, how it wins, what it is bad at, three cards that sum it up — and the
+screen says that writing is the app's own. **Four questions** with two honest answers each
+lean the dial toward the colours that play that way, and it can always be dragged back.
+
+**Commanders** come two ways: a recommended list written for this app, two per colour choice
+with a one-line reason, marked as a recommendation rather than a ranking and verified against
+Scryfall by a script; and the most played list, live from Scryfall's popularity rank for
+exactly those colours. Choosing one creates the deck. Then a **starting list by role** —
+lands, ramp, draw, removal, "does your thing" — each with a target that adds up to 99, a
+progress bar fed by the coach's own classifiers, and popular cards in the deck's colours
+under a price cap. "Fill the rest" completes the skeleton and the deck opens in the editor,
+legal and complete.
+
+Nothing in it is invented. The staples come from Scryfall by the same oracle tags the coach's
+classifiers were scored against, with a plainer fallback per role in case a tag slug changes.
+The result is a deck the coach would call sensible rather than one anyone would call
+optimised, and the screen says the numbers are a guide, not a rule.
+
+**Adding cards shows the value of a pick before it is added.** The in-deck search listed
+names alphabetically with a mana cost and nothing else. It now sorts by how played each card
+is unless asked otherwise, because Scryfall carries its EDHREC rank on every card and "what do
+people run in these colours" is the question a builder is asking; price, mana value, name and
+release date are a select away. Every row carries its price in the deck's market, its type,
+whether it is already in the deck and how many you own, and the results line totals what is
+shown. Quick chips for type and price write into the query the box shows, so nothing hidden
+is filtering; "Not in deck" and "Owned" are applied to what came back, and the line says how
+many they hid. A strip above the box says where the deck stands by role, in the coach's own
+counts, and pressing a role searches for it in the coach's own wording, so a chip and the
+coach never disagree.
+
+**Finding a card in a hundred is a design question, so it was designed first.** A deck
+list with no way to search or fold it is fine at forty cards and useless at a hundred. Rather
+than build the obvious thing, the feature went through a written design pass: three
+independent designs from three points of view, a phone at a game table, a builder at a desk
+and the least change to the code, scored by three judges on fit, phone use, accessibility,
+performance, testability and scope. Then five more reviewers combed the code for every fork
+the owner would have to choose, and the owner answered twenty-seven questions before a line
+was written: a bar pinned above the list, filtering as you type on names and type lines with
+accents folded so "jotun" finds Jötun Grunt from a phone keyboard, headers that read "2 of
+28" while the price steps aside, a miss that offers to search every card instead, and a
+search that never survives leaving the tab, because a deck that opens filtered to three cards
+looks like data loss. The bar also narrows the deck to what is still to buy, and carries a
+hairline in the deck's colours.
+
+The cascade followed as its own commit: one button per section pinned under the search, one
+section open at a time, a second tap to bring the deck back, remembered per deck without
+counting as an edit. Each button carries a dot for a legality problem and the number of cards
+still to buy, so a folded section can never hide either. The case that took the most care was
+a card added on another tab: its section opens and the row is outlined for a moment, but cards
+that come back with a restored version open everything instead, because hiding most of what
+just came back is the wrong answer to "what changed". A four-lens adversarial review of the
+search commit found the shortcut key was page-wide, a WCAG failure, and it was scoped to the
+list before anything shipped.
+
+Building it found a bug that had nothing to do with search: the editor's seven-tab strip was
+wider than a 390px phone and pushed the whole screen sideways. It now scrolls within itself.
+
+## A second opinion, weighed rather than obeyed
+
+A review of the codebase arrived from another model, written as a handoff: three defects, three
+larger improvements and a proposal for a new colour-picking interface. Every claim was checked
+against the source before any of it was accepted. The three defects held up, and one was worse
+than described: the playtest screen told a 40-land deck its opening seven would hold two lands
+"about 15% of the time" when the truth is about 85%, because the screen showed the complement of
+the number it described. The fix is one expression; the test that guards it works the
+hypergeometric out independently rather than repeating the code under test.
+
+The larger findings were right about the model and wrong about the remedy. The analysis counted
+a two-mana rock as an untapped land and solved every colour for a single pip. It now reads the
+mana base by kind: lands are there when drawn, a rock or dork comes online the turn after it is
+cast, a ritual is not a source at all, and every spell is an ask of so many pips by the turn of
+its mana value, with "needed" solved for the hardest ask from the ninety-nine cards the commander
+is not among. The screen writes its assumptions down. The proposed journey record and the
+separate colour-picker application were declined as parallel structures for state the app
+already keeps; the resumable flow they were reaching for needs two fields, not a schema.
+
+Smaller things from the same pass: a Commander pod of three or more never skips the first draw
+(rule 103.8c), so the playtest now asks how many are at the table and defaults to a pod; "fill
+the rest" could push a list past 99 when one role was already over its target, and now takes a
+cap that gives lands their room first; and the first-deck steps could be revisited after a
+commander was chosen, so a dial moved to new colours fetched staples the deck could not play.
+The starting list now follows the commander's identity whatever the dial says, and a clash is
+resolved out loud with two ways through.
+
+The three larger milestones from that review followed in order, each its own commit. The
+first-deck flow became something you can come back to: every step has an address, a reload
+lands where you were, the back button retraces the steps, an unfinished deck is offered back
+from the Decks screen, and choosing the same commander again continues the same deck rather
+than making a second one. Then the starting list learned what the deck is for: two or three
+plans per colour choice, written by the app and labelled as its own suggestion, steer the
+"does your thing" role; every listed card says why it is there from the evidence that put it
+there and claims no synergy that was not checked; and a purchase budget for the cards you do
+not own sits beside the per-card cap, distinct from what the deck is worth. Last, practice:
+a drawn hand is read back as observations, never verdicts, and one change to the list is
+proposed with the odds before and after and the assumptions written next to the numbers.
+Making it keeps the list as it was in History, one restore away.
+
+The last milestone opened the flow to sixty-card formats. Commander stays the recommendation,
+but Standard, Pioneer and Modern sit beside it: the third step becomes a start button instead
+of a commander, and the starting list follows the deck's own format, with its own skeleton,
+searches legal in that format, and a fill that takes up to four copies of a card and never
+passes sixty. A deck keeps its format; changing the chip with a deck started is resolved out
+loud, the same way a change of colours is.
+
+<p>
+  <img src="images/mtg-companion/first-deck-format-chips.png" width="300" alt="The colours step of the first-deck flow at phone width. Above the colour dial, a card headed What kind of deck? offers four chips: Commander, Standard, Pioneer and Modern. Modern is chosen, and a line beneath explains that Modern is a sixty-card, two-player format with up to four copies of a card and no commander, so the commander step becomes a start button. The dial sits on Dimir.">
+  <img src="images/mtg-companion/first-deck-start-step.png" width="300" alt="The third step of the flow, now labelled Start rather than Commander. A card headed A Modern deck in Dimir (Blue and Black) says there is no commander in Modern, that the deck is sixty cards with up to four copies, and gives the skeleton of twenty-four lands, six card draw and eight removal as a guide rather than a rule, above one button: Start a Modern deck in Dimir (Blue and Black).">
+</p>
+
+*The format chips on the colours step, and the Start step that stands in for the commander
+step once a sixty-card format is chosen. Taking the first shot caught the intro line still
+promising that nothing is saved "until you choose a commander"; it now follows the format.*
+
+Two more bugs surfaced under that work, neither in the review: the Decks screen read its list
+once at mount and missed a deck the flow saved beneath it, and the deck's add function changed
+the quantity on an entry the previous deck still shared, so a version held by reference
+could change under the caller.
+
+The verify script was the last thing to break. It checks every recommended commander and
+signature card by exact name and every plan's searches for an answer, and the sixty-card
+work doubled the searches, so the first run on a real connection was cut off by a 429
+partway through and stopped as though a search were wrong. Three commits followed, each
+made against what the run before it showed. The first retried, honouring `Retry-After`,
+and finished after two one-minute waits. The second slowed the pace to under three a second
+on the theory that the limit was a burst, and was still cut off every twenty or so requests,
+a minute lost each time. Scryfall's published ask is ten a second; whatever window applied
+to that connection was tighter and not written down anywhere. The third stopped guessing:
+the gap between requests doubles every time Scryfall says stop, so a run settles at the
+pace it is allowed and keeps it, and the wait message says how far it got and what pace it
+is moving to. The app itself never hit this, because its single queue was already gentle;
+it was the one tool that fires a hundred requests in a row that had to learn the same
+manners.
+
+The run that showed the second fix was not enough, on a home connection, with the output
+as the script printed it:
+
+```
+> mtg-companion@0.1.0 firstdeck:verify
+> node scripts/verify-first-deck.mjs
+
+Scryfall answered 429 after 21 requests; waiting 60s, then trying again (1 of 5)
+Scryfall answered 429 after 42 requests; waiting 60s, then trying again (1 of 5)
+commander: 45 plan searches checked
+Scryfall answered 429 after 66 requests; waiting 60s, then trying again (1 of 5)
+Scryfall answered 429 after 91 requests; waiting 60s, then trying again (1 of 5)
+modern: 45 plan searches checked
+45 names checked, 90 plan searches checked.
+All good.
+```
+
+Every twenty-odd requests, a minute lost, four times over: the pace was steady and still too
+fast for whatever window applied, which is what sent the third fix looking for the pace
+rather than guessing it. The last line is the one that matters, and it was the same on
+every run: every name known to Scryfall, every plan with a search that answers.
+
+## A table that plays by the rules
+
+A second outside brief followed the first, this time about learning to play with physical
+cards. Its central claim was that the scripted tutorial, for all that it teaches, could not
+tell a right move from a wrong one: it advances when the card you click matches the card the
+script expected, and every board is an authored picture. The brief listed ten findings. I
+checked each against the code before planning, and every one held. Blocking was described as
+tapping. A land was played in the draw step and attacks were declared in a main phase. Every
+permanent on both sides untapped whenever the active player changed. A six-mana creature was
+cast without its mana being spent, and the opponent cast a four-mana giant off three
+Mountains. A beat titled "A two-for-one" described a one-for-one in its own words. And the
+brief missed some: the Commander lesson credited the ban list to a body that stopped keeping
+it in 2024, the stack quiz's premise contradicted its answer, colourless mana was never told
+apart from generic, and the written lessons had no tests at all.
+
+The first commit fixed what was live, with tests that hold the boards to the rules they
+teach: a phase per beat, every action in its step, untapping only in the controller's untap
+step, every cast tapping its cost. Then the table.
+
+**A model, not a rules engine.** The repo's own architecture notes carry a standing objection
+to "a rules engine", and it stands. What was built is a small deterministic model over a
+listed pool of nineteen green and red cards: one pure function from a state and an action to
+the next state and its events, or a refusal with a reason a coach can read out. Card
+instances have identities of their own, so two Forests are two objects. Casting is a visible
+transaction: announce, tap sources, put mana on each part of the cost, commit once, and the
+spell goes to the stack rather than the battlefield. Priority goes round; a spell resolves
+only when both players pass in succession; mana empties with the step; a cast creature
+arrives summoning sick; a spell whose target has gone does not resolve; lethal damage and zero
+life are checked before anyone gets priority. What the table does not model is written in one
+file and refused by name, never approximated.
+
+<p>
+  <img src="images/mtg-companion/practice-resolved.png" width="300" alt="The practice table at phone width after the first lesson's cast resolved. The opponent's strip shows 20 life and nothing on their battlefield; the stack reads empty; your battlefield shows Grizzly Bears marked summoning sick beside a Forest and a Mountain both marked tapped; your strip shows priority and 20 life; the mana pool reads empty and the hand is empty. Below, the coach says the creature resolved, the lands are still tapped and the mana is gone, then asks what untaps next turn.">
+  <img src="images/mtg-companion/practice-stack.png" width="300" alt="The same table in the response lesson. The stack lists Giant Growth on top, yours, targeting Grizzly Bears, and Shock beneath it, theirs, also targeting Grizzly Bears. The journal beneath the board reads: your prediction was right; Forest tapped for green; you paid one green; you cast Giant Growth. The coach explains that two spells are on the stack with yours on top and asks for a pass.">
+</p>
+
+*Left: the first lesson, resolved. Right: two spells on the stack in the response lesson, the
+learner's on top.*
+
+**Lessons judged from consequences.** Three lessons, each a guided walk, then the same skill
+on a different board with no highlights, then real cards as a self-report: lands, mana and a
+first creature; attacking, blocking and damage; responding and the stack. A goal is a question
+about the state, so any legal payment counts. The combat and response lessons ask their
+prediction before the moment it is about and take one answer per run, because a guess made
+after the result is not a prediction; a wrong one is explained and left unmet. Viewed,
+practiced and demonstrated are kept apart, and demonstrated means two exercises of a lesson
+done without a hint, which the screen calls a default to try with learners rather than a
+measure of mastery. Paper practice is what the learner told us, listed and not counted.
+
+**Motion from events, and a table that resumes.** Every event has a sentence, read into a live
+region and kept as a journal; a card is marked for a moment after a committed event and never
+with motion reduced, so the same run gives the same information either way. The saved run is
+the action log, which replays to the same state: a reload picks up at the last committed
+action, undo is a step back through the same log, and a replay renders the table as it was
+without touching the game. Taking that apart found a bug elsewhere: the storage probe treated
+a write refused for lack of room as "no storage" and served an empty memory store, so a
+browser that had merely run out of space showed no decks.
+
+<p>
+  <img src="images/mtg-companion/practice-explorer.png" width="300" alt="The colour explorer at phone width. A ring of five wedges, green and white lit and the other three dim, with a 2 in the centre. Below it, five labelled toggle buttons: White and Green pressed. Under those, a panel headed Selesnya, White and Green, reading: go wide and go together, tokens, anthems, and life gain that keeps the team alive.">
+  <img src="images/mtg-companion/practice-response-reduced-motion.png" width="300" alt="The response lesson with motion reduced: the same board and the same words, with no cue applied to any card. The header shows Their turn 2, Main phase, You have priority; the stack lists Shock, theirs, targeting Grizzly Bears; the coach asks the two predictions before anything can be done.">
+</p>
+
+*Left: the colour explorer, any number of colours, handing one or two into the first-deck
+flow. Right: the same lesson with motion reduced; nothing said changes.*
+
+**Free play from the same model.** Three thirty-card practice decks from the pool, which every
+screen calls practice decks and not legal decks. A game is built from two decks, a seed and a
+mode, so its shuffles come from the seed and its log replays. Both players start on a London
+mulligan, first player first, one card owed to the bottom per mulligan, and the first player
+skips the draw. Solo is against an opponent whose rules are one sentence on the screen. Two
+people at one screen is the other mode: the table waits for whoever it says it is waiting
+for, and that person's hand stays hidden until they reveal it. The strongest test the model
+gets is five whole games between two copies of the simple opponent, with the invariants
+checked after every action.
+
+<img src="images/mtg-companion/practice-game-desktop.png" alt="Free play on a desktop. Header: a game against the practice opponent, Forests and Fangs against Goblins and Fire, opponent's turn 2, upkeep, you have priority. The opponent at 20 life has a Raging Goblin and a Mountain; the stack is empty; you at 19 life have two Forests, an empty mana pool and a hand of six drawn cards. The journal beside the board reads: your opponent begins turn 2; Mountain untapped; Raging Goblin untapped; upkeep; your opponent passed priority. Controls below: pass priority, end the turn, concede.">
+
+*A game against the practice opponent on a desktop, the journal beside the board.*
+
+All of it lives at an address nothing links to yet, beside the Learn tab, so it could be
+tried on a phone from the live site without changing anything a new player currently meets.
+Every primary source the brief cited was unreachable from the build session, so the rules the
+model encodes are cited by section number in the progress record for spot-checking, and the
+card records are checked on the owner's machine by the same kind of script as the first-deck
+names. No novice has tried it yet; the observation script is written and the record says so.
+
+## A visual system with a paper trail
+
+Two references were written for the app and now live in its repository: a universe and design
+reference, and a set reference for *Reality Fracture*, with an original asset pack built from
+them. The shell became the references' core theme, charcoal and parchment with restrained
+antique gold, in five self-hosted open fonts under the SIL Open Font License. The references'
+tokens sit in the stylesheet verbatim under their own names and the app's semantic tokens map
+onto them, so a script can diff the documents against the stylesheet and say where they
+disagree. Every emblem and ornament is the pack's own interface design, never an official
+glyph, and every emblem is shown with a text label beside it, as both references require.
+
+*Reality Fracture* is the first curated set theme: an indigo and silver shell with cyan as the
+one accent, the set's own illustration and voice on the banner, and Hexhaven's five schools,
+which are the five allied colour pairs, beside the colours in the first-deck flow with their
+disciplines, virtues and horrors. It applies app-wide while the set is the season's focus and
+retires by itself when the season moves on. The banner says the colours and lore are the app's
+reading of public previews rather than official, and the set's alias is accepted as input and
+never shown. A browser spec drives both shells on a desktop and a phone and fails if any asset
+request does.
+
+## Preparing for accounts without building them
+
+The next step for this app is a version people sign in to. Two things had to change first,
+and both were cheap now and expensive later.
+
+**Where you are is in the address bar.** Navigation lived in React state: a deck had no link,
+the back button did nothing useful, a reload lost the screen. Hash routes fix that with no
+server, which is what GitHub Pages offers. A deck's analysis tab is `#/decks/<id>/analysis`,
+a search is `#/cards?q=…`, and the card sheet is `?card=<id>` on any of them, as an overlay:
+opening it pushes a history entry so the back button closes it. The parse and build
+functions are pure and round-trip every shape; the browser spec drives the real address bar
+through open, reload, back, forward, deep links and junk.
+
+**Each deck is a document of its own.** The store was one blob rewritten whole on every
+quantity tap, and last-write-wins on a single document is exactly what a sync backend cannot
+reconcile. Now a root document holds the small whole-app things and each deck sits under its
+own key with its own `updatedAt`. A save writes the one deck that changed; a corrupt root no
+longer takes the decks with it; the old blob is split on first read and only rewritten once
+every deck has landed. The backup file's shape is unchanged. The backend interface is a keyed
+string store, so a server is one swap and carries the timestamps with it.
+
+**Then the structure caught up with the features.** The browser suite, which had caught every
+real regression, ran only by hand; it now gates the deploy in CI, in a real Chromium against
+the built app. The 726-line editor became a 240-line editor and a folder of view components
+with one row contract. The rarer deck screens became their own chunks, prefetched on idle so
+the offline guarantee holds, and the Decks chunk halved. The coach's checks and the
+first-deck flow's targets, two descriptions of the same sensible deck, became one skeleton
+module with a test that says so. And a stepper, a section header and a chip became shared
+components, with named layout modifiers replacing 104 of 165 inline style props; what is
+left inline is data.
+
+The routing change found a real bug on its first run through the existing specs: React
+flushes a route change synchronously while a state update from the same effect is still
+batched, so one render saw the new URL with the old deck list and sent every new deck
+straight back to the list. The check now reads storage, not state.
+
+The through-line is the same as the tutorial's: the coach's card classifiers are scored
+against Scryfall's own tags rather than trusted; the accessibility sweep treats a state it
+cannot reach as a failure, not a skip; and the perf harness reports the number that did not
+move alongside the ones that did.
+
+---
+
+[← Back to the MTG Companion write-up](mtg-companion.md)
+
+*Unofficial Fan Content permitted under the Wizards of the Coast Fan Content Policy.
+Non-commercial, not approved or endorsed by Wizards. Card names, rules text, images and mana
+symbols are the property of Wizards of the Coast LLC.*

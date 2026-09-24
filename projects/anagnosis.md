@@ -3,7 +3,17 @@
 A self-contained path from your first Greek letter to reading Homer, Plato, the tragedians,
 and the New Testament.
 
-**Stack:** React · Vite · PWA (service worker + manifest) · localStorage · no backend
+## At a glance
+
+- **Problem:** Greek learning tools stop at the vocabulary drill; the gap that stalls learners
+  is between knowing words and reading a real passage.
+- **What I built:** an installable, offline reader that runs from the alphabet, with
+  handwriting recognition, through a 72-word core deck and spaced repetition to a 19-passage
+  graded reader.
+- **Result:** no accounts, no server, nothing to breach — learners own their progress as a
+  JSON file that restores across two entirely different runtimes.
+- **Source:** private — happy to walk through it.
+- **Stack:** React · Vite · PWA (service worker + manifest) · localStorage · no backend
 
 ---
 
