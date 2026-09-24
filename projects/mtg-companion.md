@@ -3,6 +3,8 @@
 A local-first Magic: The Gathering companion — card reference, format-aware deck builder,
 play companion, and an interactive guide that teaches the game by playing it.
 
+**[Open the app →](https://rporter33.github.io/mtg-companion/)** · works offline and installs as a PWA.
+
 <img src="images/mtg-companion/practice-game-desktop.png" alt="Free play on a desktop. Header: a game against the practice opponent, Forests and Fangs against Goblins and Fire, opponent's turn 2, upkeep, you have priority. The opponent at 20 life has a Raging Goblin and a Mountain; the stack is empty; you at 19 life have two Forests, an empty mana pool and a hand of six drawn cards. The journal beside the board reads: your opponent begins turn 2; Mountain untapped; Raging Goblin untapped; upkeep; your opponent passed priority. Controls below: pass priority, end the turn, concede.">
 
 ## At a glance
@@ -11,7 +13,8 @@ play companion, and an interactive guide that teaches the game by playing it.
   brand-new player to their first game.
 - **What I built:** a guided first game where the player makes every move while a coach
   explains it — and around it a card search, a deck builder that checks ten formats' rules,
-  an offline life counter and a practice table that enforces the rules of play.
+  an offline life counter, a practice table that enforces the rules of play, and a free table
+  for real games that two devices can share.
 - **Result:** more than 1,600 unit tests and 33 browser specs, with the browser suite gating
   every deploy; a land-count recommender that matches the decks people actually play, after the
   intuitive formula asked for 27 lands in a 60-card deck.
@@ -109,8 +112,9 @@ illegal board, and needs no network — its card data is bundled and its cards r
 
 The alternative is a rules engine. Covering even ten cards correctly is a multi-year project
 — Forge and XMage are the evidence — and it would not teach any better. The trade-off is
-recorded explicitly: the thing a real engine would unlock is free play, which this
-deliberately does not offer.
+recorded explicitly: the thing a real engine would unlock is free play, which the tutorial
+deliberately does not offer. Free play came later, from separate models built for it (see
+[How it grew](#how-it-grew)).
 
 Narrative continuity is enforced by tests rather than by re-reading:
 
@@ -228,9 +232,19 @@ editor became a 240-line editor plus view components, and the routing change cau
 React batching bug on its first run.
 [More →](mtg-companion-build-log.md#preparing-for-accounts-without-building-them)
 
+**A table for real games, on one screen or two.** Beside the practice table sits a free table
+that knows where every card is and never what a card does, so any card on Scryfall can be played
+the moment it's fetched and the players enforce the rules, as they would at a kitchen table. It
+still teaches without judging: a printed playmat's rows, a visible stack, the turn walked step by
+step with rule numbers, and a coach that one switch silences. Two devices can share a table,
+first peer to peer over WebRTC and then through a relay that survives restarts and late joiners.
+For a table that enforces the full rules, the app wraps an existing rules engine rather than
+writing one.
+[More →](mtg-companion-build-log.md#a-table-for-real-games-on-one-screen-or-two)
+
 ## Known trade-offs
 
-Carried in `ARCHITECTURE.md` with a *when to revisit* column, as with the other projects here.
+Carried in `ARCHITECTURE.md` with a *when to revisit* column, as with Excel CES and Hearthkeeper.
 
 | Trade-off | Why |
 |---|---|
