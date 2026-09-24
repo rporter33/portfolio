@@ -50,16 +50,16 @@ on a plane, in a library with hostile wifi.
 A "Live Analyze" feature lets a learner paste or photograph a passage for AI analysis. The
 default posture is that this is *optional* and the rest of the app never depends on it.
 
-Three ways to supply credentials, in descending order of how much I'd recommend them:
+Two ways to supply credentials, in descending order of how much I'd recommend them:
 
 1. A proxy endpoint (`VITE_ANTHROPIC_PROXY_URL` or `VITE_OPENAI_PROXY_URL`) that accepts the
    provider's request body and attaches the key server-side. This is the recommended path for
    any public deployment.
-2. Build-time model configuration for accounts with different model availability.
-3. An in-app key field storing a learner's own key in their browser only — convenient for
+2. An in-app key field storing a learner's own key in their browser only — convenient for
    personal use, and documented as *worse* than the proxy rather than presented as equivalent.
 
-The provider is swappable between Anthropic and OpenAI at runtime.
+The model can also be set at build time for accounts with different model availability, and
+the provider is swappable between Anthropic and OpenAI at runtime.
 
 ## Engineering notes
 

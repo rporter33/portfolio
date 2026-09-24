@@ -84,7 +84,7 @@ Validation reports specific violations rather than a pass/fail:
 
 > Commander decks must be exactly 100 cards. This deck has 99 — 1 short.
 > Counterspell is outside your commander's colour identity (U).
-> Vintage restricts Power Card to one copy, but this deck has 2.
+> Vintage restricts Black Lotus to one copy, but this deck has 2.
 
 The rules that are easy to get subtly wrong all have tests: the four-copy limit applies
 across maindeck *and* sideboard combined, "a deck can have any number of cards named…" keeps
@@ -154,8 +154,8 @@ pushing the hand off the bottom of a phone screen.
 
 None of those would ever have failed a unit test. The full 27-beat tutorial is now walked end
 to end in a headless browser as part of verification, asserting that each beat actually
-advances and that no console errors fire. That became the rule for everything after it: 981
-unit tests cover the logic, and twenty-three browser specs drive the real interface for the parts
+advances and that no console errors fire. That became the rule for everything after it: more than
+1,600 unit tests cover the logic, and thirty-three browser specs drive the real interface for the parts
 a unit test cannot see.
 
 ## Growing it into a real deck builder
@@ -289,7 +289,7 @@ wider than a 390px phone and pushed the whole screen sideways. It now scrolls wi
 A review of the codebase arrived from another model, written as a handoff: three defects, three
 larger improvements and a proposal for a new colour-picking interface. Every claim was checked
 against the source before any of it was accepted. The three defects held up, and one was worse
-than described: the playtest screen told a 37-land deck its opening seven would hold two lands
+than described: the playtest screen told a 40-land deck its opening seven would hold two lands
 "about 15% of the time" when the truth is about 85%, because the screen showed the complement of
 the number it described. The fix is one expression; the test that guards it works the
 hypergeometric out independently rather than repeating the code under test.

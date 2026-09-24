@@ -94,9 +94,9 @@ The data said the opposite:
 | Shortlist | 24 | 42% | 21% | 33% | 1% |
 | Rejected (sample) | 52 | 21% | 38% | 23% | 9% |
 
-Half of all actual hires had **no** commission track record. Only about one in five did. But
-**zero** hires were commission-*averse* — candidates who wanted a base salary or declined
-full-commission pay.
+Only about one in five hires had a proven commission track record, and half were willing but
+unproven. But **zero** hires were commission-*averse* — candidates who wanted a base salary or
+declined full-commission pay.
 
 The predictive signal wasn't experience. It was aversion. This employer trains the
 salesperson, so inexperience is trainable and reluctance is disqualifying — two things that
@@ -109,10 +109,12 @@ practical drain on the funnel and worth its own detection signal.
 
 ### Blind re-validation
 
-Recalibrating a scorer on a corpus and then evaluating it on that same corpus proves nothing.
-So the scorer was re-run against the corpus with **outcome, recruiter verdict, and the
-reliability field stripped out** — scoring only on background, compensation evidence, drive,
-follow-through, and quotes:
+This is an in-sample check, and it should be read as one: the rubric was rebuilt from these
+same 104 interviews, so the results show the scorer can recover the pattern from the raw
+evidence alone, not that it generalizes. To keep the check honest, the scorer was re-run with
+**outcome, recruiter verdict, and the reliability field stripped out** — scoring only on
+background, compensation evidence, drive, follow-through, and quotes. A held-out test needs
+candidates who arrive after the rubric was fixed.
 
 | Check | Result |
 |---|---|

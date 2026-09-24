@@ -30,12 +30,12 @@ auditing, and estimate snapshotting so catalog changes never rewrite historical 
 
 ### [Sourcing Engines — Lucent & PM Sourcing](projects/sourcing-engines.md)
 Two Python pipelines that find candidates who aren't on LinkedIn, and score them
-against a role without breaking hiring law.
+against a role using only job-relevant criteria.
 
 The first pulls ~27,000 active Colorado trade licenses from the state's public open-data
 API and detects newly licensed individuals on each run. The second is an LLM scoring
-engine whose rubric was calibrated against **104 real interviews**, then blind-re-validated:
-it correctly gated **20/20** compensation-mismatched candidates and rated **18/19** actual
+engine whose rubric was calibrated against **104 real interviews**, then re-checked blind on
+the same corpus: it correctly gated **20/20** commission-averse candidates and rated **18/19** actual
 hires viable, with a 36-point score separation between the two groups.
 
 `Python` · `Claude API (Haiku)` · `Socrata open data` · `structured LLM output` · `corpus calibration`
@@ -78,15 +78,15 @@ to revisit them. The Excel CES architecture doc has a standing "Known Trade-offs
 with a *When to revisit* column.
 
 **I validate against reality, not vibes.** The pricing engine was checked against real
-completed workbooks. The candidate scorer was re-run blind against a real interview
-corpus with the outcomes stripped out, specifically to see whether it would reproduce
+completed workbooks. The candidate scorer was re-run blind against the interview corpus it
+was calibrated on, with the outcomes stripped out, specifically to see whether it would reproduce
 actual hiring behavior. When it disagreed once, I went and looked at why — and the
 disagreement turned out to be correct.
 
 **I take the compliance surface seriously.** Screening people with an LLM is a genuine
 legal risk if done carelessly. The scoring engine is advisory-only by construction, scores
-exclusively job-relevant signals, and refuses to consider age, family status, national
-origin, or financial proxies — with those constraints written into the rubric itself rather
+exclusively job-relevant signals, and refuses to consider age, gender, race, national
+origin, family or marital status, or financial proxies — with those constraints written into the rubric itself rather
 than bolted on afterward. During corpus analysis, protected details appearing in 41 of 104
 interview records were recorded as a presence flag only and never entered any scored field.
 
