@@ -12,6 +12,7 @@ detail for anyone who wants to see how each piece was built, measured and correc
 - [A table that plays by the rules](#a-table-that-plays-by-the-rules)
 - [A visual system with a paper trail](#a-visual-system-with-a-paper-trail)
 - [Preparing for accounts without building them](#preparing-for-accounts-without-building-them)
+- [A table for real games, on one screen or two](#a-table-for-real-games-on-one-screen-or-two)
 
 ---
 
@@ -386,6 +387,57 @@ The through-line is the same as the tutorial's: the coach's card classifiers are
 against Scryfall's own tags rather than trusted; the accessibility sweep treats a state it
 cannot reach as a failure, not a skip; and the perf harness reports the number that did not
 move alongside the ones that did.
+
+## A table for real games, on one screen or two
+
+The practice table knows nineteen cards completely and refuses what is illegal. The free table,
+on the Table tab, is the other half of the idea: it knows where every card is and never what a
+card does. That one restriction is what lets any card on Scryfall be played the moment it is
+fetched, rules text and all — the players enforce the rules, exactly as they do on a kitchen
+table. Every action is physical: move, tap, flip, draw, shuffle, reveal, set life, add a
+counter, make a token, draw an arrow, roll a die. The few refusals are about things that cannot
+happen, such as drawing from an empty library, rather than things that are not allowed.
+
+It still teaches where it can without judging. The battlefield is marked into the rows a
+printed playmat has, and a card goes to the row its type belongs in. An instant or a sorcery is
+never offered a place on the battlefield; it goes to a visible stack, last on and first to
+resolve, because that is the rule beginners get wrong most often. The turn is walked one step
+at a time with what happens in it and the rule number, and a coach speaks up about things like a
+second land in one turn — every note can be dismissed, and one switch silences the lot, because
+the whole promise of this table is that nothing on it tells you what to do. The playmat is one
+switch too, for house rules and cards nothing can parse.
+
+The screen was rebuilt beside the first one and switched in only once a parity spec showed it
+did everything the first did, check for check. Printings are chosen from Scryfall's real
+covers, a foil is drawn rather than photographed and said out loud in the card's spoken label,
+and a phone turned sideways gets a layout built for that shape.
+
+**Two devices, one table.** The board was written for this from its first commit: every action
+is small, serialisable and free of any clock, and the only randomness is a seeded shuffle, so two
+devices applying the same actions in the same order reach the same table. What was left to write
+was not a networked game engine but an agreement about order. One player's device is the table:
+it applies actions and numbers them, everyone else sends an intent and waits for the numbered
+action to come back, and a gap in the numbering means asking for the table again rather than
+guessing. The one thing the protocol checks is whose card it is — you may move what you
+control, which is the rule at a real table.
+
+The original table connects peer to peer over a WebRTC data channel, through a forty-line
+signalling server that passes the handshake and nothing else; a browser test reads back
+everything it relayed and checks that no card went through it. The rebuilt table uses a relay
+instead, and the trade is deliberate: the relay holds the board, and in return a late joiner
+gets the whole table from the server, a room survives a server restart, whose turn it is is
+decided in one place, and a socket that goes quiet is dropped by a heartbeat so the browser
+reconnects instead of hanging. Browser specs drive two real browsers through a cut socket and a
+restart. Until a relay is hosted, playing across two devices needs one you run yourself.
+
+**A judge, borrowed rather than built.** The standing position against writing a rules engine
+still holds. For a table that enforces the full rules, the app runs Argentum, an existing Kotlin
+engine that knows the Comprehensive Rules and some thirteen thousand cards, chosen after
+building it and measuring it. What is written here is the thin process around it: one game as
+JSON lines in and out, a human seat never stopped at a priority window where nothing is
+affordable, and any decision the screen cannot answer yet handled by the engine's own responder
+and reported rather than hidden. It plays on the same table screen, through the relay, from a
+**Play the engine** button in the lobby.
 
 ---
 

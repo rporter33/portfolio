@@ -92,22 +92,14 @@ scored field**.
 The interesting part wasn't building the scorer. It was discovering the rubric was wrong.
 
 The initial version treated *no commission history* as a heavy negative — the intuitive read
-for a commission-only sales role. So I structured the client's real interview history into a
+for a commission-only sales role. So I structured a real company's interview history into a
 job-relevant corpus: **104 interviews**, comprising all 28 hires and offers read in full with
 transcripts, all 24 substantive shortlist candidates, and a 52-candidate sample of rejections
 spanning the failure types.
 
-The data said the opposite:
-
-| Outcome | n | commission proven | **willing** | **averse** | unclear |
-|---|:--:|:--:|:--:|:--:|:--:|
-| Hired + offered | 28 | 18% | **50%** | **0%** | 32% |
-| Shortlist | 24 | 42% | 21% | 33% | 1% |
-| Rejected (sample) | 52 | 21% | 38% | 23% | 9% |
-
-Only about one in five hires had a proven commission track record, and half were willing but
-unproven. But **zero** hires were commission-*averse* — candidates who wanted a base salary or
-declined full-commission pay.
+The data said the opposite. Many actual hires had no commission track record at all, but
+**none** were commission-*averse* — candidates who wanted a base salary or declined
+full-commission pay.
 
 The predictive signal wasn't experience. It was aversion. This employer trains the
 salesperson, so inexperience is trainable and reluctance is disqualifying — two things that
@@ -115,8 +107,9 @@ look similar in a resume and are opposite in outcome. The rubric was rebuilt to 
 
 A second finding fell out of the same pass: the most common failure across the pipeline
 wasn't skill at all. Reliability problems — no-shows, ghosting after a tentative yes, fading
-across follow-ups — were flagged in **41 of 104** interviews, making it the single largest
-practical drain on the funnel and worth its own detection signal.
+across follow-ups — were flagged in **41 of 104** interviews (a separate count from the
+protected-details flag above that happens to land on the same number), making it the single
+largest practical drain on the funnel and worth its own detection signal.
 
 ### Blind re-validation
 
