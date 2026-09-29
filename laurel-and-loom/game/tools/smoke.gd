@@ -10,6 +10,8 @@ extends Node
 const TIMEOUT_S := 240.0
 
 var _errors := 0
+var _unravelled := {}
+var _arts_used := 0
 
 
 func _ready() -> void:
@@ -50,14 +52,30 @@ func _play(chapter: String) -> String:
 			return "STUCK in state %d" % b.s
 		if b.s == S.ENDED:
 			var st: BattleState = b.state
-			var res := "ended: %s on turn %d after %d actions" % [
-				"victory" if st.outcome == BattleState.Outcome.VICTORY else "defeat", st.turn, actions]
+			var res := "ended: %s on turn %d after %d actions (%d unravels, %d cut/turn)" % [
+				"victory" if st.outcome == BattleState.Outcome.VICTORY else "defeat", st.turn, actions,
+				BattleState.UNRAVELS - st.unravels_left, _arts_used]
 			b.queue_free()
 			await get_tree().process_frame
 			return res
 		var ready: Array[Unit] = b.state.ready_units(Unit.Team.PLAYER)
 		if ready.is_empty():
 			b._end_player_phase()
+			continue
+		# Exercise the Thread: measure now and then, and unravel a few actions
+		# (the AI then makes the same choice again, so the battle still ends).
+		if actions % 4 == 1 and b.state.can_use_art("measure"):
+			b._use_art("measure")
+			if not b.state.thread.measured:
+				return "measure did nothing"
+		if actions % 5 == 4 and b.state.unravels_left > 0 and not b.history.is_empty() and not _unravelled.has(actions):
+			_unravelled[actions] = true
+			var before: int = b.state.unravels_left
+			b._on_unravel_key()
+			if b.state.unravels_left != before - 1:
+				return "unravel did not spend a charge"
+			if b.views.size() != b.state.living().size():
+				return "views out of step after unravel"
 			continue
 		var u: Unit = ready[0]
 		var plan := EnemyAI.decide(b.state, u)
@@ -83,6 +101,13 @@ func _play(chapter: String) -> String:
 					return "target %s not offered" % target.name
 				b.target_index = idx
 				b._show_target()
+				# If the opening strike would miss, spend Fortune to fix it.
+				var fc := Combat.forecast(b.state, Combat.plan_here(b.state, u, b.weapon, target))
+				if fc["strikes"][0]["outcome"] == "miss":
+					var art := "turn" if b.state.can_use_art("turn") else "cut"
+					if b.state.can_use_art(art):
+						b._use_art(art)
+						_arts_used += 1
 				b._confirm()
 			"heal":
 				b._on_menu("heal")

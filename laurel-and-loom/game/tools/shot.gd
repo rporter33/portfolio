@@ -69,3 +69,21 @@ func menu() -> void:
 	b._move_cursor(ione.pos + Vector2i(-2, -1))
 	b._confirm_destination()
 	await get_tree().create_timer(0.6).timeout
+
+
+func measured() -> void:
+	var b = await _battle()
+	b.state.fortune = 5
+	b._use_art("measure")
+	var ione: Unit = b.state.lord()
+	var foe: Unit = b.state.living(Unit.Team.ENEMY)[1]
+	foe.pos = ione.pos + Vector2i(-1, -1)
+	b._sync_views()
+	b._select(ione)
+	b._move_cursor(ione.pos + Vector2i(-1, 0))
+	b._confirm_destination()
+	await get_tree().create_timer(0.6).timeout
+	b._on_menu("attack")
+	await get_tree().create_timer(0.3).timeout
+	b._use_art("turn")
+	await get_tree().create_timer(1.2).timeout

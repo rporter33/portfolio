@@ -85,6 +85,24 @@ static func omen_name(omen: int) -> String:
 	return ["Fair", "Middling", "Ill"][omen]
 
 
+## The bead values an omen stands for, as (lo, hi).
+static func omen_range(omen: int) -> Vector2i:
+	return [Vector2i(1, 33), Vector2i(34, 66), Vector2i(67, 100)][omen]
+
+
+## Every outcome a bead somewhere in [lo, hi] could give a strike with shown
+## `hit` and `crit`, in the order crit, hit, miss.
+static func possible_outcomes(lo: int, hi: int, hit: int, crit: int) -> Array[String]:
+	var out: Array[String] = []
+	if lo <= mini(hi, mini(crit, hit)):
+		out.append("crit")
+	if maxi(lo, crit + 1) <= mini(hi, hit):
+		out.append("hit")
+	if maxi(lo, hit + 1) <= hi:
+		out.append("miss")
+	return out
+
+
 ## The outcome of a strike with shown `hit` and `crit` that draws `bead`.
 static func judge(bead: int, hit: int, crit: int) -> String:
 	if bead > hit:

@@ -138,8 +138,13 @@ func test_forecast_matches_resolution_across_seeds() -> void:
 			for i in mini(fs.size(), rs.size()):
 				if fs[i]["outcome"] != "?":
 					compared += 1
-					if fs[i]["outcome"] != rs[i]["outcome"] or int(fs[i]["bead"]) != int(rs[i]["bead"]):
+					if fs[i]["outcome"] != rs[i]["outcome"]:
 						mismatches += 1
+					if int(fs[i]["bead"]) >= 0 and int(fs[i]["bead"]) != int(rs[i]["bead"]):
+						mismatches += 1
+				# Whatever the forecast says is possible must include what happened.
+				if not (fs[i]["possible"] as Array).has(rs[i]["outcome"]):
+					mismatches += 1
 			if fc["certain"]:
 				compared += 1
 				if fs.size() != rs.size() or int(fc["a_hp"]) != a.hp or int(fc["d_hp"]) != d.hp:
@@ -185,3 +190,14 @@ func test_heal_amount_caps_at_missing() -> void:
 	eq(Combat.heal_amount(selene, "caduceus", ione), 3)
 	ione.hp = 1
 	eq(Combat.heal_amount(selene, "caduceus", ione), 16)
+
+
+func test_possible_outcomes() -> void:
+	eq(Array(FateThread.possible_outcomes(1, 33, 90, 0)), ["hit"], "a fair omen at 90 hit is a sure hit")
+	eq(Array(FateThread.possible_outcomes(67, 100, 50, 5)), ["miss"], "an ill omen at 50 hit is a sure miss")
+	eq(Array(FateThread.possible_outcomes(34, 66, 50, 0)), ["hit", "miss"])
+	eq(Array(FateThread.possible_outcomes(1, 33, 90, 10)), ["crit", "hit"])
+	eq(Array(FateThread.possible_outcomes(1, 100, 100, 0)), ["hit"], "unseen beads can't stop a 100")
+	eq(Array(FateThread.possible_outcomes(1, 100, 0, 0)), ["miss"], "or save a 0")
+	eq(Array(FateThread.possible_outcomes(12, 12, 50, 12)), ["crit"])
+	eq(Array(FateThread.possible_outcomes(13, 13, 50, 12)), ["hit"])

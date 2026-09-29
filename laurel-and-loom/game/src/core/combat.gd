@@ -83,9 +83,11 @@ static func plan_here(state: BattleState, a: Unit, wid: String, d: Unit) -> Dict
 
 
 ## Read the thread without drawing from it. Each strike gets the bead it would
-## draw; strikes on exact beads get a definite outcome. After the first strike
-## that isn't certain, later HP is unknown — `certain` goes false and the
-## remaining strikes are listed as possible rather than predicted.
+## draw. A strike's outcome is known when every bead it could draw gives the
+## same result: always for exact beads, often for omens (a "fair" bead against
+## 90 hit is a hit whatever its number), and even for unseen beads at 0 or 100
+## hit. After the first strike whose outcome isn't known, later HP is unknown —
+## `certain` goes false and the remaining strikes are listed as possible.
 static func forecast(state: BattleState, p: Dictionary) -> Dictionary:
 	var a: Unit = p["a"]
 	var d: Unit = p["d"]
@@ -100,14 +102,23 @@ static func forecast(state: BattleState, p: Dictionary) -> Dictionary:
 		var target := "d" if who == "a" else "a"
 		var s := {"who": who, "bead_index": index, "hit": num["hit"], "crit": num["crit"],
 			"dmg": num["dmg"], "bead": -1, "omen": -1, "outcome": "?"}
+		var lo := 1
+		var hi := 100
 		if state.thread.is_visible(index):
 			var bead := state.thread.peek(index)
 			if state.thread.is_exact(index):
 				s["bead"] = bead
+				lo = bead
+				hi = bead
 			else:
 				s["omen"] = FateThread.omen_of(bead)
-		if certain and s["bead"] != -1:
-			var outcome := FateThread.judge(int(s["bead"]), int(num["hit"]), int(num["crit"]))
+				var r := FateThread.omen_range(int(s["omen"]))
+				lo = r.x
+				hi = r.y
+		var outs := FateThread.possible_outcomes(lo, hi, int(num["hit"]), int(num["crit"]))
+		s["possible"] = outs
+		if certain and outs.size() == 1:
+			var outcome: String = outs[0]
 			s["outcome"] = outcome
 			if outcome != "miss":
 				var dealt := int(num["dmg"]) * (CRIT_MULT if outcome == "crit" else 1)

@@ -94,8 +94,12 @@ Hymnists — led in the first act by **Centurion Bassa**.
 
 ### 5.3 The forecast
 Because beads are visible, the combat forecast shows the *actual* outcome of every strike
-whose bead is exact, an omen-level guess for the next three, and "?" past that. The
-forecast accounts for strikes that won't happen (a unit that dies doesn't counter).
+whose outcome is already fixed, and "?" for the rest. A strike's outcome is fixed when every
+bead it could draw gives the same result: always for an exact bead, often for an omen (a
+*fair* bead against 90 Hit is a hit whatever its number), and even for an unseen bead at 0 or
+100 Hit. The forecast accounts for strikes that won't happen (a unit that dies doesn't
+counter), and the thread bar highlights the beads the fight would draw, in the colour of the
+side that draws each one.
 
 ### 5.4 Fortune and the Fate Arts
 **Fortune** is a gauge of 0–6, starting at 2. It fills from *misfortune*:

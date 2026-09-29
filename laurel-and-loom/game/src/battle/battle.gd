@@ -8,7 +8,7 @@ signal battle_finished(victory: bool)
 enum S { IDLE, SELECTED, ACTION_MENU, WEAPON_MENU, TARGETING, HEAL_TARGETING, MAP_MENU, BUSY, ENEMY, ENDED }
 
 const T := 64.0
-const MARGIN_TOP := 96.0
+const MARGIN_TOP := 124.0
 const MARGIN_BOTTOM := 170.0
 const MARGIN_SIDE := 32.0
 const DIRS := {
@@ -37,6 +37,8 @@ var danger_on := false
 var marked := {}
 var history: Array[BattleState] = []
 var pending_snapshot: BattleState
+## While true the thread bar is being animated and mustn't resync.
+var _thread_hold := false
 
 var board: BoardView
 var overlay: OverlayView
@@ -56,6 +58,7 @@ func _ready() -> void:
 	_move_cursor(lord.pos if lord != null else Vector2i.ZERO, true)
 	hud.menu.chosen.connect(_on_menu)
 	hud.end_menu.chosen.connect(_on_end_menu)
+	hud.fortune.art_pressed.connect(_on_art_pressed)
 	_refresh()
 	await _phase_banner()
 	s = S.IDLE
@@ -305,6 +308,7 @@ func _cancel() -> void:
 			_open_action_menu()
 		S.TARGETING, S.HEAL_TARGETING:
 			hud.hide_forecast()
+			hud.thread_bar.set_marks([])
 			overlay.clear_ranges()
 			_open_action_menu()
 		S.MAP_MENU:
@@ -563,9 +567,16 @@ func _show_target() -> void:
 	hud.show_terrain(state.map, t.pos)
 	if s == S.TARGETING:
 		var p := Combat.plan_here(state, selected, weapon, t)
-		hud.show_forecast(p, Combat.forecast(state, p))
+		var fc := Combat.forecast(state, p)
+		hud.show_forecast(p, fc)
+		var marks := []
+		for st in fc["strikes"]:
+			var striker: Unit = p["a"] if st["who"] == "a" else p["d"]
+			marks.append({"index": st["bead_index"], "team": striker.team})
+		hud.thread_bar.set_marks(marks)
 	else:
 		hud.hide_forecast()
+		hud.thread_bar.set_marks([])
 
 
 func _execute_attack() -> void:
@@ -576,8 +587,7 @@ func _execute_attack() -> void:
 	hud.hide_forecast()
 	overlay.clear_ranges()
 	history.append(pending_snapshot)
-	var result := state.attack(selected, weapon, target)
-	await _animate_combat(result)
+	await _fight(selected, weapon, target)
 	await _after_action()
 
 
@@ -638,19 +648,81 @@ func _end_player_phase() -> void:
 	await _run_enemy_phase()
 
 
-# --- Fate Arts and Unravel (Stage 2) ------------------------------------------------
+# --- The Thread: Fate Arts and Unravel ----------------------------------------------
 
-func _use_art(_art: String) -> void:
-	pass
+## Resolve a fight, replaying it with the thread bar spending a bead per strike.
+func _fight(attacker: Unit, wid: String, target: Unit) -> void:
+	_thread_hold = true
+	hud.thread_bar.set_marks([])
+	var result := state.attack(attacker, wid, target)
+	await _animate_combat(result)
+	_thread_hold = false
+	hud.thread_bar.sync(state)
+	hud.fortune_gain(int(result.get("fortune_gained", 0)))
+
+
+func _art_allowed_now() -> bool:
+	return s in [S.IDLE, S.SELECTED, S.ACTION_MENU, S.WEAPON_MENU, S.TARGETING, S.HEAL_TARGETING, S.MAP_MENU]
+
+
+func _on_art_pressed(art: String) -> void:
+	if art == "unravel":
+		_on_unravel_key()
+	else:
+		_use_art(art)
+
+
+func _use_art(art: String) -> void:
+	if not _art_allowed_now():
+		return
+	if not state.can_use_art(art):
+		if state.phase == Unit.Team.PLAYER and state.fortune < int(BattleState.ART_COST.get(art, 0)):
+			hud.toast("Not enough Fortune")
+		elif art == "measure" and state.thread.measured:
+			hud.toast("The thread is already measured")
+		return
+	# Arts used between actions are their own step for Unravel; mid-action,
+	# the action's snapshot (taken at selection) already covers them.
+	if s == S.IDLE or s == S.MAP_MENU:
+		history.append(state.clone())
+	state.use_art(art)
+	match art:
+		"cut":
+			hud.thread_bar.pop_front("cut")
+			hud.toast("Atropos cuts the thread", Palette.VERDIGRIS.lightened(0.3))
+			_resync_thread_later()
+		"turn":
+			hud.thread_bar.flip_front(state.thread.peek(0))
+			hud.toast("The wheel turns", Palette.GOLD)
+		"measure":
+			hud.thread_bar.sync(state)
+			hud.toast("Lachesis measures the thread", Palette.MARBLE)
+	if s == S.TARGETING or s == S.HEAL_TARGETING:
+		_show_target()
+	_refresh_fortune()
+
+
+func _resync_thread_later() -> void:
+	await get_tree().create_timer(Game.dur(0.3)).timeout
+	if not _thread_hold:
+		hud.thread_bar.sync(state)
+
+
+func _can_unravel() -> bool:
+	return (s == S.IDLE or s == S.MAP_MENU) and state.unravels_left > 0 and not history.is_empty()
 
 
 func _on_unravel_key() -> void:
-	if s == S.IDLE:
+	if s == S.IDLE or s == S.MAP_MENU:
+		hud.menu.close()
+		s = S.IDLE
 		_unravel()
 
 
 func _unravel() -> void:
 	if history.is_empty() or state.unravels_left <= 0:
+		if state.unravels_left <= 0:
+			hud.toast("No unravelling left")
 		return
 	var left := state.unravels_left - 1
 	state = history.pop_back()
@@ -659,7 +731,13 @@ func _unravel() -> void:
 	_rebuild_views()
 	overlay.clear_ranges()
 	s = S.IDLE
+	hud.thread_bar.sync(state)
+	hud.toast("Unravelled", Palette.GOLD)
 	_refresh()
+
+
+func _refresh_fortune() -> void:
+	hud.fortune.sync(state, _can_unravel(), _art_allowed_now() and state.phase == Unit.Team.PLAYER)
 
 
 # --- Enemy phase ----------------------------------------------------------------------
@@ -672,6 +750,9 @@ func _run_enemy_phase() -> void:
 	selected = null
 	var healed := state.advance_phase()
 	_sync_views()
+	hud.thread_bar.sync(state)
+	hud.thread_bar.set_marks([])
+	_refresh_fortune()
 	await _phase_banner()
 	await _show_altar_heals(healed)
 	for e in state.living(Unit.Team.ENEMY):
@@ -690,8 +771,7 @@ func _run_enemy_phase() -> void:
 			"attack":
 				var target := state.unit_by_uid(plan["target"])
 				_move_cursor(target.pos)
-				var result := state.attack(e, plan["weapon"], target)
-				await _animate_combat(result)
+				await _fight(e, plan["weapon"], target)
 			"heal":
 				var ally := state.unit_by_uid(plan["target"])
 				var amount := state.heal(e, plan["weapon"], ally)
@@ -700,13 +780,16 @@ func _run_enemy_phase() -> void:
 				state.wait(e)
 		_sync_views()
 		await get_tree().create_timer(Game.dur(0.1)).timeout
+	var fortune_before := state.fortune
 	if state.outcome == BattleState.Outcome.ONGOING:
 		healed = state.advance_phase()
 	if state.outcome != BattleState.Outcome.ONGOING:
 		await _finish()
 		return
 	_sync_views()
+	_refresh()
 	await _phase_banner()
+	hud.fortune_gain(state.fortune - fortune_before)
 	await _show_altar_heals(healed)
 	var lord := state.lord()
 	if lord != null and lord.is_alive():
@@ -768,6 +851,7 @@ func _animate_combat(result: Dictionary) -> void:
 		var tw := create_tween()
 		tw.tween_property(sv, "offset", dir * 18.0, Game.dur(0.10)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		await tw.finished
+		hud.thread_bar.pop_front(str(strike["outcome"]))
 		match strike["outcome"]:
 			"miss":
 				_float_text(tv.position, "MISS", Palette.MARBLE, 26)
@@ -861,6 +945,11 @@ func _refresh() -> void:
 		overlay.marked_tiles.merge(Pathfinder.threat_tiles(state, e, st))
 	overlay.queue_redraw()
 	hud.set_objective(state.turn, state.objective_text(), state.phase)
+	if not _thread_hold:
+		hud.thread_bar.sync(state)
+		if s != S.TARGETING:
+			hud.thread_bar.set_marks([])
+	_refresh_fortune()
 	_refresh_panels()
 	_refresh_hints()
 
@@ -879,13 +968,13 @@ func _refresh_hints() -> void:
 	var h := ""
 	match s:
 		S.IDLE:
-			h = "Z select  ·  Tab next  ·  R danger  ·  E end turn"
+			h = "Z select  ·  Tab next  ·  R danger  ·  E end turn  ·  M C T arts  ·  U unravel"
 		S.SELECTED:
 			h = "Z move  ·  X cancel"
 		S.ACTION_MENU, S.WEAPON_MENU, S.MAP_MENU:
 			h = "↑↓ choose  ·  Z confirm  ·  X back"
 		S.TARGETING:
-			h = "←→ target  ·  Z attack  ·  X back"
+			h = "←→ target  ·  Z attack  ·  X back  ·  M C T arts"
 		S.HEAL_TARGETING:
 			h = "←→ ally  ·  Z heal  ·  X back"
 	hud.set_hints(h)

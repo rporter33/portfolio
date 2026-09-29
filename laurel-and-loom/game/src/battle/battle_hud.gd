@@ -6,6 +6,8 @@ extends CanvasLayer
 
 var menu: MenuList
 var end_menu: MenuList
+var thread_bar: ThreadBar
+var fortune: FortunePanel
 
 var _root: Control
 var _unit_panel: PanelContainer
@@ -47,6 +49,10 @@ func _ready() -> void:
 	_root.theme = UiTheme.get_theme()
 	add_child(_root)
 	_build_objective()
+	thread_bar = ThreadBar.new()
+	_root.add_child(thread_bar)
+	fortune = FortunePanel.new()
+	_root.add_child(fortune)
 	_build_unit_panel()
 	_build_terrain_panel()
 	_build_forecast()
@@ -55,6 +61,18 @@ func _ready() -> void:
 	_root.add_child(menu)
 	_build_banner()
 	_build_end()
+	_root.resized.connect(_layout_top)
+	_layout_top.call_deferred()
+
+
+func _layout_top() -> void:
+	var w := _root.size.x
+	fortune.reset_size()
+	fortune.position = Vector2(w - fortune.size.x - 16, 12)
+	thread_bar.size = thread_bar.custom_minimum_size
+	var left := 16.0 + maxf(_objective_panel.size.x, 170.0) + 14.0
+	var free := fortune.position.x - left
+	thread_bar.position = Vector2(left + maxf(0.0, (free - thread_bar.size.x) * 0.5), 12)
 
 
 # --- Builders ------------------------------------------------------------------
@@ -69,9 +87,11 @@ func _panel(anchor: int) -> PanelContainer:
 
 func _build_objective() -> void:
 	_objective_panel = _panel(Control.PRESET_TOP_LEFT)
-	_objective_panel.position = Vector2(16, 16)
+	_objective_panel.position = Vector2(16, 12)
+	_objective_panel.custom_minimum_size = Vector2(170, 96)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 0)
+	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	_objective_panel.add_child(v)
 	_objective_turn = UiTheme.label("TURN I", 22, "display", Palette.INK, 700)
 	_objective_text = UiTheme.label("Rout the enemy", 20, "text", Palette.INK_SOFT, 600)
@@ -302,6 +322,20 @@ func show_forecast(p: Dictionary, fc: Dictionary) -> void:
 	mid.add_child(vs)
 	cols.add_child(mid)
 	cols.add_child(_forecast_column(d, p["d_weapon"], p["d_num"], p["d_doubles"], int(fc["d_hp"]), fc["certain"], HORIZONTAL_ALIGNMENT_RIGHT))
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 2)
+	for st in fc["strikes"]:
+		var chip := StrikeChip.new()
+		var striker: Unit = a if st["who"] == "a" else d
+		chip.setup(st, striker.team, striker.name.get_slice(" ", 0).to_upper())
+		row.add_child(chip)
+	var rule := Meander.new()
+	rule.custom_minimum_size = Vector2(0, 12)
+	rule.color = Color(Palette.GOLD, 0.7)
+	rule.line_width = 1.5
+	_forecast_box.add_child(rule)
+	_forecast_box.add_child(row)
 	var traits := _trait_notes(p)
 	if not traits.is_empty():
 		var t := UiTheme.label("  ·  ".join(traits), 16, "text", Palette.INK_SOFT, 600)
@@ -391,3 +425,33 @@ func hide_end() -> void:
 
 func root_size() -> Vector2:
 	return _root.size
+
+
+## "+1 Fortune", floating up beside the wheel.
+func fortune_gain(n: int) -> void:
+	if n <= 0:
+		return
+	fortune.celebrate()
+	var l := UiTheme.label("+%d FORTUNE" % n, 18, "display", Palette.GOLD, 700)
+	l.add_theme_color_override("font_outline_color", Palette.INK)
+	l.add_theme_constant_override("outline_size", 5)
+	_root.add_child(l)
+	l.position = fortune.position + Vector2(4, fortune.size.y + 4)
+	var tw := create_tween().set_parallel()
+	tw.tween_property(l, "position:y", l.position.y + 18, Game.dur(0.9))
+	tw.tween_property(l, "modulate:a", 0.0, Game.dur(0.9)).set_delay(Game.dur(0.4))
+	tw.chain().tween_callback(l.queue_free)
+
+
+## A short message across the top of the board ("Not enough Fortune").
+func toast(text: String, color: Color = Palette.MARBLE) -> void:
+	var l := UiTheme.label(text, 22, "display", color, 700)
+	l.add_theme_color_override("font_outline_color", Palette.LAPIS_DEEP)
+	l.add_theme_constant_override("outline_size", 7)
+	_root.add_child(l)
+	l.reset_size()
+	l.position = Vector2((_root.size.x - l.size.x) * 0.5, 128)
+	var tw := create_tween()
+	tw.tween_interval(Game.dur(0.9))
+	tw.tween_property(l, "modulate:a", 0.0, Game.dur(0.4))
+	tw.tween_callback(l.queue_free)
