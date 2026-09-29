@@ -92,9 +92,10 @@ func _on_pressed(i: int) -> void:
 
 
 func _on_hover(i: int) -> void:
-	if items[i].get("enabled", true):
+	if items[i].get("enabled", true) and index != i:
 		index = i
 		_restyle()
+		Sound.play("menu", 1.0, -6.0)
 
 
 func _restyle() -> void:

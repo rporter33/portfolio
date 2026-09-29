@@ -23,6 +23,10 @@ func _ready() -> void:
 		var result: String = await _play(str(ch))
 		print("smoke %-10s %s" % [ch, result])
 		ok = ok and result.begins_with("ended")
+	await get_tree().process_frame
+	Sound.shutdown()
+	UiTheme.release()
+	await get_tree().process_frame
 	get_tree().quit(0 if ok else 1)
 
 

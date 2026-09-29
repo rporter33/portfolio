@@ -26,10 +26,14 @@ static func noise(x: int, y: int, k: int = 0) -> float:
 func _draw() -> void:
 	if map == null:
 		return
-	# A lapis margin frames the board like a mount.
+	# The board sits in a mount: a gold rule, a lapis band with a running
+	# meander, and a second rule.
 	var full := Rect2(Vector2.ZERO, Vector2(map.width, map.height) * T)
-	draw_rect(full.grow(10), Palette.GOLD_DEEP)
-	draw_rect(full.grow(7), Palette.LAPIS_DEEP)
+	var band := 26.0
+	draw_rect(full.grow(band + 4), Palette.GOLD_DEEP)
+	draw_rect(full.grow(band + 2), Palette.LAPIS)
+	_meander_frame(full.grow(band * 0.5 + 2), band - 10)
+	draw_rect(full.grow(4), Palette.GOLD_DEEP)
 	for y in map.height:
 		for x in map.width:
 			_draw_tile(Vector2i(x, y))
@@ -40,6 +44,30 @@ func _draw() -> void:
 	for y in range(1, map.height):
 		draw_line(Vector2(0, y * T), Vector2(map.width * T, y * T), grid, 1.0)
 	draw_rect(full, Palette.GOLD, false, 2.0)
+
+
+## A meander running round `r`, centred on its edge, `h` pixels tall.
+func _meander_frame(r: Rect2, h: float) -> void:
+	var col := Color(Palette.GOLD, 0.85)
+	var sides := [
+		[r.position, 0.0, r.size.x], [r.position + Vector2(r.size.x, 0), PI * 0.5, r.size.y],
+		[r.end, PI, r.size.x], [r.position + Vector2(0, r.size.y), PI * 1.5, r.size.y],
+	]
+	for side in sides:
+		draw_set_transform(side[0], side[1])
+		var length: float = side[2]
+		var count := int(length / h)
+		var x0 := (length - count * h) * 0.5
+		for i in count:
+			var o := Vector2(x0 + i * h, -h * 0.5)
+			var pts := PackedVector2Array()
+			for p in [Vector2(0.10, 1.0), Vector2(0.10, 0.12), Vector2(0.82, 0.12), Vector2(0.82, 0.78),
+					Vector2(0.36, 0.78), Vector2(0.36, 0.42), Vector2(0.60, 0.42)]:
+				pts.append(o + p * h)
+			draw_polyline(pts, col, 1.5)
+		draw_line(Vector2(0, -h * 0.5 - 2), Vector2(length, -h * 0.5 - 2), col, 1.5)
+		draw_line(Vector2(0, h * 0.5 + 2), Vector2(length, h * 0.5 + 2), col, 1.5)
+	draw_set_transform(Vector2.ZERO, 0.0)
 
 
 func _draw_tile(c: Vector2i) -> void:

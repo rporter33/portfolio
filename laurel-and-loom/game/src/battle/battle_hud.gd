@@ -39,6 +39,7 @@ var _end_title: Label
 var _end_sub: Label
 
 var _hints: Label
+var _hints_panel: PanelContainer
 
 
 func _ready() -> void:
@@ -157,12 +158,22 @@ func _build_forecast() -> void:
 
 
 func _build_hints() -> void:
+	_hints_panel = PanelContainer.new()
+	_hints_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(Palette.LAPIS_DEEP, 0.88)
+	sb.border_color = Color(Palette.GOLD, 0.5)
+	sb.set_border_width_all(1)
+	sb.set_corner_radius_all(12)
+	sb.content_margin_left = 14
+	sb.content_margin_right = 14
+	sb.content_margin_top = 2
+	sb.content_margin_bottom = 3
+	_hints_panel.add_theme_stylebox_override("panel", sb)
 	_hints = UiTheme.label("", 16, "text", Palette.MARBLE, 600)
-	_hints.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_hints.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hints.add_theme_color_override("font_outline_color", Palette.LAPIS_DEEP)
-	_hints.add_theme_constant_override("outline_size", 6)
-	_root.add_child(_hints)
+	_hints_panel.add_child(_hints)
+	_root.add_child(_hints_panel)
 
 
 func _build_banner() -> void:
@@ -294,8 +305,9 @@ func show_terrain(map: BattleMap, c: Vector2i) -> void:
 
 func set_hints(text: String) -> void:
 	_hints.text = text
-	_hints.reset_size()
-	_hints.position = Vector2((_root.size.x - _hints.size.x) * 0.5, _root.size.y - _hints.size.y - 10)
+	_hints_panel.visible = text != ""
+	_hints_panel.reset_size()
+	_hints_panel.position = Vector2((_root.size.x - _hints_panel.size.x) * 0.5, _root.size.y - _hints_panel.size.y - 8)
 
 
 func hide_forecast() -> void:
@@ -427,10 +439,23 @@ func root_size() -> Vector2:
 	return _root.size
 
 
+## A full-screen flash that fades out (crits, unravelling).
+func flash(color: Color, strength: float) -> void:
+	var r := ColorRect.new()
+	r.set_anchors_preset(Control.PRESET_FULL_RECT)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	r.color = Color(color, strength)
+	_root.add_child(r)
+	var tw := create_tween()
+	tw.tween_property(r, "color:a", 0.0, Game.dur(0.35))
+	tw.tween_callback(r.queue_free)
+
+
 ## "+1 Fortune", floating up beside the wheel.
 func fortune_gain(n: int) -> void:
 	if n <= 0:
 		return
+	Sound.play("fortune")
 	fortune.celebrate()
 	var l := UiTheme.label("+%d FORTUNE" % n, 18, "display", Palette.GOLD, 700)
 	l.add_theme_color_override("font_outline_color", Palette.INK)

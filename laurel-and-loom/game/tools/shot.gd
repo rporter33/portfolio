@@ -17,6 +17,12 @@ func _ready() -> void:
 	var img := get_viewport().get_texture().get_image()
 	img.save_png(out)
 	print("saved %s (%s)" % [out, img.get_size()])
+	for c in get_children():
+		c.queue_free()
+	await get_tree().process_frame
+	Sound.shutdown()
+	UiTheme.release()
+	await get_tree().process_frame
 	get_tree().quit()
 
 
@@ -45,10 +51,10 @@ func forecast() -> void:
 	var b = await _battle()
 	var ione: Unit = b.state.lord()
 	var foe: Unit = b.state.living(Unit.Team.ENEMY)[1]
-	foe.pos = ione.pos + Vector2i(0, -2)
+	foe.pos = ione.pos + Vector2i(-2, -1)
 	b._sync_views()
 	b._select(ione)
-	b._move_cursor(ione.pos + Vector2i(0, -1))
+	b._move_cursor(ione.pos + Vector2i(-2, 0))
 	b._confirm_destination()
 	await get_tree().create_timer(0.6).timeout
 	b._on_menu("attack")
@@ -87,3 +93,19 @@ func measured() -> void:
 	await get_tree().create_timer(0.3).timeout
 	b._use_art("turn")
 	await get_tree().create_timer(1.2).timeout
+
+
+func title() -> void:
+	var m: Node = load("res://src/main.tscn").instantiate()
+	add_child(m)
+	await get_tree().create_timer(1.2).timeout
+
+
+func enemy_phase() -> void:
+	var b = await _battle()
+	# Walk Cassian forward so the enemy has someone to strike.
+	var cassian: Unit = b.state.living(Unit.Team.PLAYER)[0]
+	b.state.move_unit(cassian, cassian.pos + Vector2i(-2, -3))
+	b._sync_views()
+	b._end_player_phase()
+	await get_tree().create_timer(3.2).timeout

@@ -4,6 +4,9 @@ extends Node2D
 ## All rules live in src/core; this file only asks and shows.
 
 signal battle_finished(victory: bool)
+## "retry" or "title". Whoever runs the battle decides what that means; when
+## the battle is the whole scene (run on its own from the editor), it reloads.
+signal exit_requested(action: String)
 
 enum S { IDLE, SELECTED, ACTION_MENU, WEAPON_MENU, TARGETING, HEAL_TARGETING, MAP_MENU, BUSY, ENEMY, ENDED }
 
@@ -51,6 +54,7 @@ var views := {}
 
 
 func _ready() -> void:
+	Sound.music("battle")
 	state = BattleSetup.create(chapter_id, roster)
 	_build_scene()
 	_rebuild_views()
@@ -238,6 +242,7 @@ func _on_mouse_motion() -> void:
 	match s:
 		S.IDLE, S.SELECTED:
 			_move_cursor(t)
+			Sound.play("cursor", 1.0, -4.0)
 		S.TARGETING, S.HEAL_TARGETING:
 			for i in targets.size():
 				if targets[i].pos == t:
@@ -265,16 +270,20 @@ func _direction(d: Vector2i) -> void:
 	match s:
 		S.IDLE, S.SELECTED:
 			_move_cursor(cursor + d)
+			Sound.play("cursor")
 		S.ACTION_MENU, S.WEAPON_MENU, S.MAP_MENU:
 			if d.y != 0:
 				hud.menu.move(d.y)
+				Sound.play("menu")
 		S.TARGETING, S.HEAL_TARGETING:
 			if not targets.is_empty():
 				target_index = posmod(target_index + (1 if d.x + d.y > 0 else -1), targets.size())
 				_show_target()
+				Sound.play("menu")
 		S.ENDED:
 			if d.y != 0:
 				hud.end_menu.move(d.y)
+				Sound.play("menu")
 
 
 func _confirm() -> void:
@@ -294,6 +303,8 @@ func _confirm() -> void:
 
 
 func _cancel() -> void:
+	if s != S.IDLE and s != S.ENDED:
+		Sound.play("cancel")
 	match s:
 		S.IDLE:
 			if not marked.is_empty():
@@ -334,6 +345,7 @@ func _confirm_idle() -> void:
 
 
 func _select(u: Unit) -> void:
+	Sound.play("select")
 	selected = u
 	origin = u.pos
 	origin_moved = u.moved
@@ -394,6 +406,7 @@ func _confirm_destination() -> void:
 
 func _commit_move(dest: Vector2i, then_target: Unit) -> void:
 	s = S.BUSY
+	Sound.play("confirm")
 	var path := Pathfinder.path_to(reach, dest)
 	overlay.clear_ranges()
 	await _animate_walk(selected, path)
@@ -485,6 +498,7 @@ func _open_map_menu() -> void:
 		{"id": "unravel", "label": "Unravel (%d)" % state.unravels_left,
 			"enabled": state.unravels_left > 0 and not history.is_empty()},
 		{"id": "restart", "label": "Restart Battle"},
+		{"id": "title", "label": "Return to Title"},
 	]
 	hud.menu.open(items, _screen_pos(cursor) + Vector2(T + 12, -8))
 	s = S.MAP_MENU
@@ -492,6 +506,7 @@ func _open_map_menu() -> void:
 
 
 func _on_menu(id: String) -> void:
+	Sound.play("confirm")
 	match s:
 		S.ACTION_MENU:
 			match id:
@@ -525,7 +540,9 @@ func _on_menu(id: String) -> void:
 				"unravel":
 					_unravel()
 				"restart":
-					get_tree().reload_current_scene()
+					_exit("retry")
+				"title":
+					_exit("title")
 
 
 func _begin_targeting(preselect: Unit) -> void:
@@ -686,6 +703,7 @@ func _use_art(art: String) -> void:
 	if s == S.IDLE or s == S.MAP_MENU:
 		history.append(state.clone())
 	state.use_art(art)
+	Sound.play(art)
 	match art:
 		"cut":
 			hud.thread_bar.pop_front("cut")
@@ -731,6 +749,7 @@ func _unravel() -> void:
 	_rebuild_views()
 	overlay.clear_ranges()
 	s = S.IDLE
+	Sound.play("unravel")
 	hud.thread_bar.sync(state)
 	hud.toast("Unravelled", Palette.GOLD)
 	_refresh()
@@ -744,6 +763,7 @@ func _refresh_fortune() -> void:
 
 func _run_enemy_phase() -> void:
 	s = S.ENEMY
+	hud.set_hints("")
 	hud.menu.close()
 	hud.hide_forecast()
 	overlay.clear_ranges()
@@ -800,6 +820,9 @@ func _run_enemy_phase() -> void:
 
 func _phase_banner() -> void:
 	hud.set_objective(state.turn, state.objective_text(), state.phase)
+	var player := state.phase == Unit.Team.PLAYER
+	Sound.play("phase_player" if player else "phase_enemy")
+	Sound.drums(not player)
 	var main := "PLAYER PHASE" if state.phase == Unit.Team.PLAYER else "ENEMY PHASE"
 	var tw := hud.show_banner("TURN %s" % UiTheme.roman(state.turn), main, state.phase)
 	await tw.finished
@@ -817,13 +840,22 @@ func _finish() -> void:
 	else:
 		var lord := state.lord()
 		sub = "%s has fallen. The thread is cut." % (lord.name if lord != null else "The Augur")
-	hud.show_end(victory, sub, [{"id": "retry", "label": "Fight Again"}])
+	Sound.drums(false)
+	Sound.play("victory" if victory else "defeat")
+	hud.show_end(victory, sub, [{"id": "retry", "label": "Fight Again"}, {"id": "title", "label": "Return to Title"}])
 	battle_finished.emit(victory)
 
 
 func _on_end_menu(id: String) -> void:
-	if id == "retry":
+	Sound.play("confirm")
+	_exit(id)
+
+
+func _exit(action: String) -> void:
+	if exit_requested.get_connections().is_empty():
 		get_tree().reload_current_scene()
+	else:
+		exit_requested.emit(action)
 
 
 # --- Animation ----------------------------------------------------------------------
@@ -852,6 +884,9 @@ func _animate_combat(result: Dictionary) -> void:
 		tw.tween_property(sv, "offset", dir * 18.0, Game.dur(0.10)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		await tw.finished
 		hud.thread_bar.pop_front(str(strike["outcome"]))
+		Sound.play(str(strike["outcome"]))
+		if strike["outcome"] == "crit":
+			await _crit_moment()
 		match strike["outcome"]:
 			"miss":
 				_float_text(tv.position, "MISS", Palette.MARBLE, 26)
@@ -880,6 +915,10 @@ func _animate_combat(result: Dictionary) -> void:
 		if result[key + "_died"]:
 			var v: UnitView = views.get(result[key + "_uid"])
 			if v != null:
+				Sound.play("death")
+				var dust := DustEffect.new()
+				dust.setup(v.position, Palette.TEAM_RELIEF[v.team], Palette.TEAM_FIELD[v.team])
+				fx_layer.add_child(dust)
 				var fade := create_tween().set_parallel()
 				fade.tween_property(v, "modulate:a", 0.0, Game.dur(0.45))
 				fade.tween_property(v, "scale", Vector2(1.25, 1.25), Game.dur(0.45))
@@ -893,11 +932,22 @@ func _animate_combat(result: Dictionary) -> void:
 			await push.finished
 
 
+## A critical: a held breath, a flash of gold, and the camera jolts.
+func _crit_moment() -> void:
+	hud.flash(Palette.GOLD, 0.45)
+	await get_tree().create_timer(Game.dur(0.14)).timeout
+	var tw := create_tween()
+	for k in 4:
+		tw.tween_property(camera, "offset", Vector2(randf_range(-6, 6), randf_range(-5, 5)), Game.dur(0.03))
+	tw.tween_property(camera, "offset", Vector2.ZERO, Game.dur(0.04))
+
+
 func _animate_heal(target: Unit, amount: int) -> void:
 	var v: UnitView = views.get(target.uid)
 	if v == null:
 		return
 	_float_text(v.position, "+%d" % amount, Palette.VERDIGRIS, 28)
+	Sound.play("heal")
 	var tw := create_tween()
 	tw.tween_method(v.set_shown_hp, v.shown_hp, float(target.hp), Game.dur(0.35))
 	await tw.finished
@@ -967,6 +1017,8 @@ func _refresh_panels() -> void:
 func _refresh_hints() -> void:
 	var h := ""
 	match s:
+		S.ENEMY, S.BUSY, S.ENDED:
+			h = ""
 		S.IDLE:
 			h = "Z select  ·  Tab next  ·  R danger  ·  E end turn  ·  M C T arts  ·  U unravel"
 		S.SELECTED:

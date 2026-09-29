@@ -23,6 +23,13 @@ static func font(family: String = "text", weight: int = 500) -> Font:
 	return v
 
 
+## Drop the cached theme and fonts (tools call this before quitting so the
+## engine doesn't report them as leaked).
+static func release() -> void:
+	_theme = null
+	_fonts.clear()
+
+
 static func display(weight: int = 600) -> Font:
 	return font("display", weight)
 
@@ -58,6 +65,10 @@ static func get_theme() -> Theme:
 	t.set_stylebox("panel", "Panel", panel_box())
 
 	t.set_color("font_color", "Label", Palette.INK)
+	t.set_font("font", "TooltipLabel", text(600))
+	t.set_font_size("font_size", "TooltipLabel", 18)
+	t.set_color("font_color", "TooltipLabel", Palette.INK)
+	t.set_stylebox("panel", "TooltipPanel", panel_box())
 
 	var normal := StyleBoxFlat.new()
 	normal.bg_color = Color(0, 0, 0, 0)
