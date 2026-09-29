@@ -1,28 +1,43 @@
 extends Node
-## Plays whole battles through the real battle scene — the same controller
-## calls that keyboard and mouse input make — with the AI choosing moves for
-## the player's side. Catches controller and animation bugs that the pure
+## Plays the game through its real scenes — the same controller calls that
+## keyboard and mouse input make — with the AI choosing moves for the
+## player's side. Catches controller, flow and animation bugs that the pure
 ## rules tests can't see.
 ##
-##   godot --headless --path . res://tools/smoke.tscn -- [chapter] [seed]
-## Exits 0 when every battle ends in victory or defeat, 1 otherwise.
+##   godot --headless --path . res://tools/smoke.tscn               # every chapter, then the campaign
+##   godot --headless --path . res://tools/smoke.tscn -- ch2         # one chapter
+##   godot --headless --path . res://tools/smoke.tscn -- campaign    # title to ending
+## Exits 0 when everything ends properly, 1 otherwise.
 
-const TIMEOUT_S := 240.0
+const TIMEOUT_S := 300.0
+const SMOKE_SAVE := "user://smoke_test.save"
 
-var _errors := 0
 var _unravelled := {}
 var _arts_used := 0
+var _last_screen := ""
 
 
 func _ready() -> void:
 	Game.anim_speed = 25.0
+	Campaign.save_path = SMOKE_SAVE
+	Campaign.delete_save()
 	var args := OS.get_cmdline_user_args()
-	var chapters: Array = [args[0]] if args.size() > 0 else Chapters.ORDER
 	var ok := true
-	for ch in chapters:
-		var result: String = await _play(str(ch))
-		print("smoke %-10s %s" % [ch, result])
-		ok = ok and result.begins_with("ended")
+	var runs: Array = args if args.size() > 0 else Chapters.ORDER + ["campaign"]
+	for run in runs:
+		var result: String
+		if run == "campaign":
+			result = await _campaign()
+		else:
+			var b: Node = load("res://src/battle/battle.tscn").instantiate()
+			b.chapter_id = str(run)
+			b.tutorial_enabled = false
+			add_child(b)
+			result = await _drive_battle(b)
+			b.queue_free()
+		print("smoke %-10s %s" % [run, result])
+		ok = ok and (result.begins_with("ended") or result.begins_with("finished"))
+	Campaign.delete_save()
 	await get_tree().process_frame
 	Sound.shutdown()
 	UiTheme.release()
@@ -40,28 +55,29 @@ func _wait_until(b: Node, states: Array, limit: float = 30.0) -> bool:
 	return true
 
 
-func _play(chapter: String) -> String:
-	var b: Node = load("res://src/battle/battle.tscn").instantiate()
-	b.chapter_id = chapter
-	add_child(b)
+## Play one battle to its end screen. Leaves the battle in place.
+## `attempt` rotates which ready unit moves first, so a retry plays out
+## differently (the same choices on the same seed give the same battle).
+func _drive_battle(b: Node, attempt: int = 0) -> String:
 	var S = b.S
+	_unravelled.clear()
+	_arts_used = 0
 	var started := Time.get_ticks_msec()
 	var actions := 0
 	while true:
 		if (Time.get_ticks_msec() - started) / 1000.0 > TIMEOUT_S:
-			b.queue_free()
 			return "TIMEOUT after %d actions" % actions
+		# The Codex may be open before the prologue: close it like a player would.
+		for c in b.hud.get_children():
+			if c.has_method("_close"):
+				c._close()
 		if not await _wait_until(b, [S.IDLE, S.ENDED], 60.0):
-			b.queue_free()
 			return "STUCK in state %d" % b.s
 		if b.s == S.ENDED:
 			var st: BattleState = b.state
-			var res := "ended: %s on turn %d after %d actions (%d unravels, %d cut/turn)" % [
+			return "ended: %s on turn %d after %d actions (%d unravels, %d cut/turn)" % [
 				"victory" if st.outcome == BattleState.Outcome.VICTORY else "defeat", st.turn, actions,
 				BattleState.UNRAVELS - st.unravels_left, _arts_used]
-			b.queue_free()
-			await get_tree().process_frame
-			return res
 		var ready: Array[Unit] = b.state.ready_units(Unit.Team.PLAYER)
 		if ready.is_empty():
 			b._end_player_phase()
@@ -81,8 +97,14 @@ func _play(chapter: String) -> String:
 			if b.views.size() != b.state.living().size():
 				return "views out of step after unravel"
 			continue
-		var u: Unit = ready[0]
+		var u: Unit = ready[(attempt * 2) % ready.size()]
 		var plan := EnemyAI.decide(b.state, u)
+		# A lord standing on the gate should take it.
+		if b.state.objective.get("type", "") == "seize" and u.is_lord:
+			var reach := Pathfinder.reachable(b.state, u)
+			var gate: Vector2i = b.state.objective["tile"]
+			if reach["cost"].has(gate) and b.state.unit_at(gate) == null:
+				plan = {"move": gate, "action": "wait"}
 		# Drive the controller the way input would.
 		b._move_cursor(u.pos)
 		b._confirm()
@@ -124,3 +146,67 @@ func _play(chapter: String) -> String:
 				else:
 					b._on_menu("wait")
 	return "unreachable"
+
+
+## Title → new casual campaign → every story and battle → the ending → title.
+## Midway, return to the title and Continue from the save.
+func _campaign() -> String:
+	var m: Node = load("res://src/main.tscn").instantiate()
+	add_child(m)
+	await get_tree().process_frame
+	m._on_title_choice("new")
+	m._on_title_choice("casual")
+	m.campaign.seed_value = 1
+	var battles := 0
+	var stories := 0
+	var attempts := {}
+	var continued := false
+	var started := Time.get_ticks_msec()
+	while (Time.get_ticks_msec() - started) / 1000.0 < TIMEOUT_S * 4:
+		await get_tree().process_frame
+		var screen: Node = m._screen
+		if screen == null or screen.is_queued_for_deletion():
+			continue
+		var script_path: String = screen.get_script().resource_path
+		if script_path != _last_screen:
+			_last_screen = script_path
+			print("  campaign screen: %s (chapter %d)" % [script_path.get_file(), m.campaign.chapter if m.campaign else -1])
+		if script_path.ends_with("story_scene.gd"):
+			stories += 1
+			# After the first chapter's story ends, prove Continue works.
+			if not continued and m.campaign.chapter == 1:
+				continued = true
+				if not Campaign.has_save():
+					m.queue_free()
+					return "no save after the prologue"
+				m.goto_title()
+				await get_tree().process_frame
+				m._on_title_choice("continue")
+				continue
+			while screen._index < screen._lines.size():
+				screen._advance()
+			await get_tree().process_frame
+		elif script_path.ends_with("battle.gd"):
+			battles += 1
+			var ch: String = screen.chapter_id
+			attempts[ch] = int(attempts.get(ch, -1)) + 1
+			if attempts[ch] >= 8:
+				m.queue_free()
+				return "could not win %s in 8 attempts" % ch
+			var result := await _drive_battle(screen, attempts[ch])
+			if not result.begins_with("ended"):
+				m.queue_free()
+				return "battle %s: %s" % [screen.chapter_id, result]
+			var won: bool = screen.state.outcome == BattleState.Outcome.VICTORY
+			print("  campaign %-9s %s" % [screen.chapter_id, result])
+			screen._on_end_menu("continue" if won else "retry")
+		elif script_path.ends_with("ending.gd"):
+			var summary := "finished: %d battles, %d stories, level %d Ione, save %s" % [
+				battles, stories, int(m.campaign.roster["ione"]["level"]),
+				"kept" if Campaign.has_save() else "missing"]
+			screen.done.emit()
+			await get_tree().process_frame
+			m.queue_free()
+			return summary
+	m.queue_free()
+	return "TIMEOUT in the campaign"

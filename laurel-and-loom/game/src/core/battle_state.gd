@@ -24,6 +24,13 @@ var phase: int = PLAYER
 var objective: Dictionary = {"type": "rout"}
 var outcome: int = Outcome.ONGOING
 var unravels_left: int = UNRAVELS
+## Enemy reinforcements: [{"turn": int, "at": Vector2i, ...unit spec}]. They
+## arrive at the start of the enemy phase of their turn and act the next.
+var reinforcements: Array = []
+## uids of the units that arrived at the most recent phase start.
+var last_spawned: Array[int] = []
+## Whether player units earn experience (off in unit tests of other rules).
+var xp_enabled := true
 var _next_uid: int = 1
 
 
@@ -118,7 +125,34 @@ func begin_phase(team: int) -> Array:
 			healed.append({"uid": u.uid, "amount": amount})
 	if team == PLAYER and turn > 1:
 		gain_fortune(1)
+	last_spawned.clear()
+	if team == ENEMY:
+		_spawn_reinforcements()
 	return healed
+
+
+func _spawn_reinforcements() -> void:
+	for r in reinforcements:
+		if int(r["turn"]) != turn:
+			continue
+		var u := BattleSetup.unit_from_spec(r, {})
+		if u == null:
+			continue
+		var at := _free_tile_near(r["at"], u.move_type())
+		if at.x < 0:
+			continue
+		add_unit(u, ENEMY, at)
+		u.acted = true
+		last_spawned.append(u.uid)
+
+
+## `at` if it's free and passable for `move_type`, else the nearest tile that is.
+func _free_tile_near(at: Vector2i, move_type: String) -> Vector2i:
+	for radius in 4:
+		for t in map.tiles_in_range(at, radius, radius):
+			if map.move_cost(t, move_type) < Terrain.IMPASSABLE and unit_at(t) == null:
+				return t
+	return Vector2i(-1, -1)
 
 
 ## End the current phase and begin the next. Survive objectives are won when
@@ -147,6 +181,7 @@ func attack(u: Unit, weapon_id: String, target: Unit) -> Dictionary:
 	u.equip(weapon_id)
 	var result := Combat.resolve(self, u, weapon_id, target)
 	u.acted = true
+	result["xp"] = _combat_xp(result, u, target)
 	var gained := 0
 	for s in result["strikes"]:
 		if s["striker_team"] == PLAYER and s["outcome"] == "miss":
@@ -158,11 +193,35 @@ func attack(u: Unit, weapon_id: String, target: Unit) -> Dictionary:
 	return result
 
 
-func heal(u: Unit, staff_id: String, target: Unit) -> int:
+## Returns {"amount": int, "xp": [xp events]}.
+func heal(u: Unit, staff_id: String, target: Unit) -> Dictionary:
 	var amount := Combat.heal_amount(u, staff_id, target)
 	target.hp += amount
 	u.acted = true
-	return amount
+	var xp := []
+	if xp_enabled and u.team == PLAYER:
+		var got := Progression.staff_xp(u)
+		xp.append({"uid": u.uid, "amount": got, "levels": Progression.grant(u, got)})
+	return {"amount": amount, "xp": xp}
+
+
+## XP events for the player units in a fight: [{"uid", "amount", "levels"}].
+func _combat_xp(result: Dictionary, a: Unit, d: Unit) -> Array:
+	var out := []
+	if not xp_enabled:
+		return out
+	for pair in [[a, d], [d, a]]:
+		var me: Unit = pair[0]
+		var foe: Unit = pair[1]
+		if me.team != PLAYER or not me.is_alive():
+			continue
+		var dealt := false
+		for s in result["strikes"]:
+			if s["striker"] == me.uid and int(s["dealt"]) > 0:
+				dealt = true
+		var got := Progression.combat_xp(me, foe, dealt, not foe.is_alive())
+		out.append({"uid": me.uid, "amount": got, "levels": Progression.grant(me, got)})
+	return out
 
 
 func wait(u: Unit) -> void:
@@ -223,7 +282,7 @@ func check_outcome() -> int:
 	if (l != null and not l.is_alive()) or living(PLAYER).is_empty():
 		outcome = Outcome.DEFEAT
 		return outcome
-	if living(ENEMY).is_empty():
+	if living(ENEMY).is_empty() and not reinforcements_pending():
 		outcome = Outcome.VICTORY
 		return outcome
 	if objective.get("type", "") == "boss":
@@ -233,12 +292,23 @@ func check_outcome() -> int:
 	return outcome
 
 
+## Whether any reinforcements are still to arrive after this point. Clearing
+## the field early doesn't win a battle the enemy is still marching on.
+func reinforcements_pending() -> bool:
+	for r in reinforcements:
+		var t := int(r["turn"])
+		if t > turn or (t == turn and phase == PLAYER):
+			return true
+	return false
+
+
 func objective_text() -> String:
 	match objective.get("type", "rout"):
 		"seize":
 			return "Seize the gate"
 		"survive":
-			return "Survive %d turns" % int(objective.get("turns", 0))
+			var left := int(objective.get("turns", 0)) - turn + 1
+			return "Survive — %d turn%s left" % [left, "" if left == 1 else "s"]
 		"boss":
 			var b := boss()
 			return "Defeat %s" % (b.name if b != null else "the commander")
@@ -259,5 +329,7 @@ func clone() -> BattleState:
 	s.objective = objective.duplicate()
 	s.outcome = outcome
 	s.unravels_left = unravels_left
+	s.reinforcements = reinforcements
+	s.xp_enabled = xp_enabled
 	s._next_uid = _next_uid
 	return s

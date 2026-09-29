@@ -23,7 +23,8 @@ var _time := 0.0
 
 
 func _init() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	tooltip_text = "The Measured Thread. Each strike takes the front bead: at or under Hit lands, at or under Crit is critical."
 	custom_minimum_size = Vector2(LEFT + SPACING * 8 + 24, 96)
 
 

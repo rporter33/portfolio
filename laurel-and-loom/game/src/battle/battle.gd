@@ -23,6 +23,12 @@ const DIRS := {
 @export var chapter_id := "prologue"
 ## Companions carried over from earlier chapters (id → Unit.to_dict()).
 var roster := {}
+## Part of a campaign: victory offers "Continue" rather than a rematch.
+var in_campaign := false
+## Show the Codex before chapters marked as tutorials.
+var tutorial_enabled := true
+## The thread's seed; -1 uses the chapter's own.
+var battle_seed := -1
 
 var state: BattleState
 var s: int = S.BUSY
@@ -55,7 +61,7 @@ var views := {}
 
 func _ready() -> void:
 	Sound.music("battle")
-	state = BattleSetup.create(chapter_id, roster)
+	state = BattleSetup.create(chapter_id, roster, battle_seed)
 	_build_scene()
 	_rebuild_views()
 	var lord := state.lord()
@@ -64,8 +70,21 @@ func _ready() -> void:
 	hud.end_menu.chosen.connect(_on_end_menu)
 	hud.fortune.art_pressed.connect(_on_art_pressed)
 	_refresh()
+	if tutorial_enabled and Chapters.data(chapter_id).get("tutorial", false):
+		await _open_overlay(preload("res://src/ui/codex_panel.gd").new())
 	await _phase_banner()
 	s = S.IDLE
+	_refresh()
+
+
+## Show a modal panel (Codex, Settings) over the battle and wait for it.
+func _open_overlay(panel: Control) -> void:
+	var before := s
+	s = S.BUSY
+	hud.set_hints("")
+	hud.add_child(panel)
+	await panel.closed
+	s = before if before != S.BUSY else S.IDLE
 	_refresh()
 
 
@@ -497,6 +516,8 @@ func _open_map_menu() -> void:
 		{"id": "danger", "label": "Danger Zone: %s" % ("On" if danger_on else "Off")},
 		{"id": "unravel", "label": "Unravel (%d)" % state.unravels_left,
 			"enabled": state.unravels_left > 0 and not history.is_empty()},
+		{"id": "codex", "label": "Codex"},
+		{"id": "settings", "label": "Settings"},
 		{"id": "restart", "label": "Restart Battle"},
 		{"id": "title", "label": "Return to Title"},
 	]
@@ -539,6 +560,10 @@ func _on_menu(id: String) -> void:
 					_toggle_danger()
 				"unravel":
 					_unravel()
+				"codex":
+					_open_overlay(preload("res://src/ui/codex_panel.gd").new())
+				"settings":
+					_open_overlay(preload("res://src/ui/settings_panel.gd").new())
 				"restart":
 					_exit("retry")
 				"title":
@@ -615,8 +640,9 @@ func _execute_heal() -> void:
 	s = S.BUSY
 	overlay.clear_ranges()
 	history.append(pending_snapshot)
-	var amount := state.heal(selected, weapon, target)
-	await _animate_heal(target, amount)
+	var res := state.heal(selected, weapon, target)
+	await _animate_heal(target, int(res["amount"]))
+	await _show_xp(res["xp"])
 	await _after_action()
 
 
@@ -676,6 +702,7 @@ func _fight(attacker: Unit, wid: String, target: Unit) -> void:
 	_thread_hold = false
 	hud.thread_bar.sync(state)
 	hud.fortune_gain(int(result.get("fortune_gained", 0)))
+	await _show_xp(result.get("xp", []))
 
 
 func _art_allowed_now() -> bool:
@@ -769,12 +796,18 @@ func _run_enemy_phase() -> void:
 	overlay.clear_ranges()
 	selected = null
 	var healed := state.advance_phase()
+	var arrivals := state.last_spawned.duplicate()
 	_sync_views()
+	for uid in arrivals:
+		var v: UnitView = views.get(uid)
+		if v != null:
+			v.modulate.a = 0.0
 	hud.thread_bar.sync(state)
 	hud.thread_bar.set_marks([])
 	_refresh_fortune()
 	await _phase_banner()
 	await _show_altar_heals(healed)
+	await _show_arrivals(arrivals)
 	for e in state.living(Unit.Team.ENEMY):
 		if state.outcome != BattleState.Outcome.ONGOING:
 			break
@@ -794,8 +827,8 @@ func _run_enemy_phase() -> void:
 				await _fight(e, plan["weapon"], target)
 			"heal":
 				var ally := state.unit_by_uid(plan["target"])
-				var amount := state.heal(e, plan["weapon"], ally)
-				await _animate_heal(ally, amount)
+				var res := state.heal(e, plan["weapon"], ally)
+				await _animate_heal(ally, int(res["amount"]))
 			_:
 				state.wait(e)
 		_sync_views()
@@ -842,7 +875,10 @@ func _finish() -> void:
 		sub = "%s has fallen. The thread is cut." % (lord.name if lord != null else "The Augur")
 	Sound.drums(false)
 	Sound.play("victory" if victory else "defeat")
-	hud.show_end(victory, sub, [{"id": "retry", "label": "Fight Again"}, {"id": "title", "label": "Return to Title"}])
+	var options := [{"id": "retry", "label": "Fight Again"}, {"id": "title", "label": "Return to Title"}]
+	if victory and in_campaign:
+		options = [{"id": "continue", "label": "Continue"}]
+	hud.show_end(victory, sub, options)
 	battle_finished.emit(victory)
 
 
@@ -932,6 +968,22 @@ func _animate_combat(result: Dictionary) -> void:
 			await push.finished
 
 
+## "+N XP" over each unit that earned some, then a level-up card for any
+## that rose.
+func _show_xp(events: Array) -> void:
+	for ev in events:
+		var v: UnitView = views.get(ev["uid"])
+		if v != null and int(ev["amount"]) > 0:
+			_float_text(v.position + Vector2(0, -30), "+%d XP" % int(ev["amount"]), Palette.GOLD, 18)
+	for ev in events:
+		for lv in ev["levels"]:
+			var u := state.unit_by_uid(ev["uid"])
+			if u != null:
+				_sync_views()
+				Sound.play("victory", 1.5, -6.0)
+				await hud.show_level_up(u, lv)
+
+
 ## A critical: a held breath, a flash of gold, and the camera jolts.
 func _crit_moment() -> void:
 	hud.flash(Palette.GOLD, 0.45)
@@ -952,6 +1004,25 @@ func _animate_heal(target: Unit, amount: int) -> void:
 	tw.tween_method(v.set_shown_hp, v.shown_hp, float(target.hp), Game.dur(0.35))
 	await tw.finished
 	await get_tree().create_timer(Game.dur(0.15)).timeout
+
+
+## Reinforcements fade in where they arrive.
+func _show_arrivals(uids: Array) -> void:
+	if uids.is_empty():
+		return
+	for uid in uids:
+		var u := state.unit_by_uid(uid)
+		var v: UnitView = views.get(uid)
+		if u == null or v == null:
+			continue
+		_move_cursor(u.pos)
+		v.scale = Vector2(1.3, 1.3)
+		var tw := create_tween().set_parallel()
+		tw.tween_property(v, "modulate:a", 1.0, Game.dur(0.35))
+		tw.tween_property(v, "scale", Vector2.ONE, Game.dur(0.35))
+		await tw.finished
+	hud.toast("Reinforcements!", Palette.TERRACOTTA)
+	await get_tree().create_timer(Game.dur(0.4)).timeout
 
 
 func _show_altar_heals(healed: Array) -> void:

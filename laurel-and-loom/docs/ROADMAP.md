@@ -10,7 +10,7 @@ criteria that are checked before the next stage starts. Stages 0–4 make up the
 | 1 | The Board | Done |
 | 2 | The Thread | Done |
 | 3 | Marble & Lyre | Done |
-| 4 | The First Act | Next |
+| 4 | The First Act | Done |
 | 5 | The Distaff | Planned |
 | 6 | The Forum | Planned |
 | 7 | Three Oaths | Planned |
@@ -101,3 +101,7 @@ controller support, Steam build.
 | One equipped weapon at a time, chosen when attacking | Keeps inventory UI small | If item variety grows past ~3 per unit |
 | No weapon durability | FE-style durability adds bookkeeping that fights the thread's puzzle focus | Stage 5 playtests |
 | Enemies ignore the thread | Keeps the AI fair and legible; the Distaff will change this on purpose | Stage 5 |
+| Level-ups seeded by companion and level, not drawn from the thread | Retries and Unravel can't farm growth; the thread stays about combat | If players find fixed growth dull — a per-campaign salt is one line |
+| Retrying a battle replays the same thread | The thread becomes learnable, which suits a game about reading it | If retries feel like rote; the campaign seed already varies playthroughs |
+| Difficulty checked by AI-vs-AI win rates, not playtests | The only signal available while building; a person with the thread, arts and Unravel does far better than the naive player AI | First outside playtest |
+| Save only between chapters | Mid-battle state is small (Unravel already snapshots it) but a suspend save is its own UX | When chapters grow past ~20 minutes |

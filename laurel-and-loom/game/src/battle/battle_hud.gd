@@ -80,7 +80,9 @@ func _layout_top() -> void:
 
 func _panel(anchor: int) -> PanelContainer:
 	var p := PanelContainer.new()
-	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Panels swallow the mouse so hovering or clicking them doesn't reach the
+	# board tiles underneath.
+	p.mouse_filter = Control.MOUSE_FILTER_STOP
 	p.set_anchors_preset(anchor)
 	_root.add_child(p)
 	return p
@@ -437,6 +439,56 @@ func hide_end() -> void:
 
 func root_size() -> Vector2:
 	return _root.size
+
+
+## A level-up card: the new level and every stat, with the risen ones in
+## gold. Dismisses itself.
+func show_level_up(u: Unit, lv: Dictionary) -> void:
+	var card := PanelContainer.new()
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_theme_stylebox_override("panel", UiTheme.panel_box(Palette.MARBLE, Palette.GOLD, 3))
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	card.add_child(v)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 12)
+	var portrait := CameoPortrait.new()
+	portrait.custom_minimum_size = Vector2(72, 72)
+	portrait.show_unit(u)
+	head.add_child(portrait)
+	var names := VBoxContainer.new()
+	names.alignment = BoxContainer.ALIGNMENT_CENTER
+	names.add_child(UiTheme.label(u.name.to_upper(), 24, "display", Palette.INK, 700))
+	names.add_child(UiTheme.label("Level %s" % UiTheme.roman(int(lv["level"])), 22, "display", Palette.GOLD_DEEP, 700))
+	head.add_child(names)
+	v.add_child(head)
+	var m := Meander.new()
+	m.custom_minimum_size = Vector2(0, 12)
+	v.add_child(m)
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 18)
+	var gains: Dictionary = lv["gains"]
+	for k in UnitClasses.STAT_KEYS:
+		var up := gains.has(k)
+		var cell := HBoxContainer.new()
+		cell.custom_minimum_size = Vector2(92, 0)
+		cell.add_child(UiTheme.label(k.capitalize(), 16, "display", Palette.INK_SOFT, 600))
+		cell.add_child(UiTheme.label(str(u.stat(k)), 22, "text", Palette.GOLD_DEEP if up else Palette.INK, 700))
+		if up:
+			cell.add_child(UiTheme.label("+%d" % int(gains[k]), 18, "display", Palette.GOLD_DEEP, 700))
+		grid.add_child(cell)
+	v.add_child(grid)
+	_root.add_child(card)
+	card.reset_size()
+	card.position = (_root.size - card.size) * 0.5
+	card.modulate.a = 0.0
+	var tw := create_tween()
+	tw.tween_property(card, "modulate:a", 1.0, Game.dur(0.2))
+	tw.tween_interval(Game.dur(1.6))
+	tw.tween_property(card, "modulate:a", 0.0, Game.dur(0.25))
+	tw.tween_callback(card.queue_free)
+	await tw.finished
 
 
 ## A full-screen flash that fades out (crits, unravelling).

@@ -12,7 +12,7 @@ static func act(st: BattleState, u: Unit) -> Dictionary:
 		"attack":
 			plan["result"] = st.attack(u, plan["weapon"], st.unit_by_uid(plan["target"]))
 		"heal":
-			plan["amount"] = st.heal(u, plan["weapon"], st.unit_by_uid(plan["target"]))
+			plan["result"] = st.heal(u, plan["weapon"], st.unit_by_uid(plan["target"]))
 		_:
 			if st.can_seize(u):
 				st.seize(u)

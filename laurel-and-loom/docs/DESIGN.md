@@ -196,7 +196,44 @@ No triangle. Each type has one trait you can plan around.
 - **Survive** — hold out until the end of turn *N*.
 - **Defeat commander** — defeat the named boss.
 
-Always: the battle is lost if Ione falls.
+Always: the battle is lost if Ione falls. Defeating every enemy also wins — but not while
+reinforcements are still due, so a Survive map can't be won by clearing its first wave.
+
+**Reinforcements** arrive at the start of the enemy phase of their turn, on the nearest free
+tile to their mark, and act from the following turn — the player always gets one phase to
+answer them.
+
+## 10a. The First Act
+
+| Chapter | Map | Objective | Joins | Teaches |
+|---|---|---|---|---|
+| Prologue — *The Oath at the Academy* | 15×10 peristyle | Rout | Ione, Cassian, Selene | Moving, the thread, Fortune (with the Codex) |
+| I — *The Olive Road* | 20×13 groves and a stream | Seize the Hill Gate | Dama, Oren | Bridges as chokepoints; Shove moves a hoplite off the road |
+| II — *The Aqueduct at Serra* | 18×12 plain under the arches | Survive 7 turns | Mirelle | Reinforcements; piers stop horses, and Brace punishes them |
+| III — *The Temple of the Moirai* | 18×14 temple court | Defeat Centurion Bassa | Theron | A commander on an altar; Resonance ignores its cover |
+
+## 10b. Growth
+
+| Event | Experience |
+|---|---|
+| Strike that deals no damage | 1 |
+| Damage dealt | 10 + 2 × (foe's level − yours) |
+| Defeat a foe | + 20 + 3 × level difference, + 30 for a commander |
+| Heal with a staff | 12 |
+
+100 experience is a level, to a cap of 20. On a level-up each stat rises by one with its growth
+chance — but the roll is **seeded by the companion and the level being reached**, not drawn
+from the thread. Ione's Level 5 is the same Level 5 however many times you retry or unravel:
+growth is fated too, and a reset can't farm it.
+
+## 10c. The campaign
+
+- **Classic** — a companion who falls is gone for the rest of the campaign.
+- **Casual** — the fallen return, at full health, for the next chapter.
+
+Each campaign has its own seed, mixed into every chapter's thread: two playthroughs see
+different beads, but retrying a battle within a campaign replays the same thread, so it can
+be learned. The campaign saves after every chapter won; the title screen offers Continue.
 
 ## 11. Enemy behaviour
 
@@ -222,6 +259,8 @@ terrain Avoid/Def.
 | Measure / Cut / Turn | M / C / T | Buttons on the thread bar |
 | Unravel | U / Ctrl+Z | Button |
 | End turn | E | Map menu |
+| Codex, Settings | Map menu (Z on an empty tile) | |
+| Fullscreen | F11 / Alt+Enter | Settings |
 
 Controller support is planned for Stage 7.
 
@@ -237,6 +276,8 @@ Controller support is planned for Stage 7.
 - **Art is code, too.** Tiles and cameo portraits are drawn procedurally with `_draw()`, so
   the project has no binary art to manage at this stage. Fonts are OFL (Cinzel, Cormorant
   Garamond).
+- **So is the sound.** `tools/make_audio.py` synthesises every effect and loop — a
+  Karplus–Strong lyre, a frame drum, filtered noise — deterministically, in pure Python.
 - **Tests.** A small headless test runner (`tests/run_tests.gd`) covers the rules and runs
   full AI-vs-AI battles to make sure every chapter terminates cleanly.
 
