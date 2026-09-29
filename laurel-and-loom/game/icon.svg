@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- A cameo: jasper field, gold rim, a laurel wreath around a spindle. -->
+  <circle cx="64" cy="64" r="62" fill="#C9A24B"/>
+  <circle cx="64" cy="64" r="55" fill="#5B7FA6"/>
+  <circle cx="64" cy="64" r="55" fill="none" stroke="#ECE7DC" stroke-width="2" opacity="0.5"/>
+  <g fill="#ECE7DC">
+    <!-- left laurel branch -->
+    <ellipse cx="34" cy="86" rx="5" ry="10" transform="rotate(-40 34 86)"/>
+    <ellipse cx="28" cy="72" rx="5" ry="10" transform="rotate(-20 28 72)"/>
+    <ellipse cx="28" cy="57" rx="5" ry="10" transform="rotate(0 28 57)"/>
+    <ellipse cx="33" cy="43" rx="5" ry="10" transform="rotate(25 33 43)"/>
+    <!-- right laurel branch -->
+    <ellipse cx="94" cy="86" rx="5" ry="10" transform="rotate(40 94 86)"/>
+    <ellipse cx="100" cy="72" rx="5" ry="10" transform="rotate(20 100 72)"/>
+    <ellipse cx="100" cy="57" rx="5" ry="10" transform="rotate(0 100 57)"/>
+    <ellipse cx="95" cy="43" rx="5" ry="10" transform="rotate(-25 95 43)"/>
+    <!-- spindle -->
+    <rect x="62" y="30" width="4" height="70" rx="2"/>
+    <ellipse cx="64" cy="66" rx="12" ry="18"/>
+  </g>
+  <g stroke="#23385E" stroke-width="1.5" fill="none" opacity="0.6">
+    <path d="M53 58 Q64 54 75 58"/>
+    <path d="M52 66 Q64 62 76 66"/>
+    <path d="M53 74 Q64 70 75 74"/>
+  </g>
+</svg>

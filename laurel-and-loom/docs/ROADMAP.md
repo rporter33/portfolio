@@ -7,8 +7,8 @@ criteria that are checked before the next stage starts. Stages 0–4 make up the
 | Stage | Name | Status |
 |---|---|---|
 | 0 | The Plan | Done |
-| 1 | The Board | Next |
-| 2 | The Thread | Planned |
+| 1 | The Board | Done |
+| 2 | The Thread | Next |
 | 3 | Marble & Lyre | Planned |
 | 4 | The First Act | Planned |
 | 5 | The Distaff | Planned |

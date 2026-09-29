@@ -15,3 +15,23 @@ heroine, an Augur, can cut a bead away or turn it over.
 ## Status
 
 Built in stages; see the [roadmap](docs/ROADMAP.md) for where it stands.
+
+## Running it
+
+1. Install [Godot 4.7](https://godotengine.org/download) (standard build, not .NET).
+2. Open `game/project.godot` in the editor and press **F5**, or from a terminal:
+   `godot --path game`
+
+Controls: arrows/WASD or the mouse to move the cursor; **Z**/Enter/left-click to confirm;
+**X**/Esc/right-click to cancel; **Tab** next unit; **R** danger zone; **E** end turn.
+
+## Tests
+
+```sh
+GODOT=/path/to/godot game/tools/run_tests.sh                   # rules: pathfinding, combat, thread, AI, chapters
+godot --headless --path game res://tools/smoke.tscn          # plays every chapter through the real battle scene
+```
+
+The rules live in `game/src/core/` as plain objects with no scene nodes, so they test
+headlessly; the smoke run drives the actual battle controller, AI on both sides, until
+each chapter ends.

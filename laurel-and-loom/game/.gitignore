@@ -1,0 +1,9 @@
+# Godot's import cache and editor state — regenerated on open.
+.godot/
+# Exported builds.
+/build/
+*.exe
+*.pck
+*.x86_64
+# Screenshots written by tools/screenshot.gd.
+/screenshots/
