@@ -113,16 +113,18 @@ built from that game's reviews.
 
 One complete chapter with two classes, Diablo-style loot, a three-phase boss that reads how you
 fight and answers it, and seeded endgame trials. It runs on a deterministic simulation built
-first, before any content, so co-op can come later without a rewrite. Instancing every model
-through a joint-matrix texture keeps a forty-enemy fight to around twenty draw calls. Balance is
+first, before any content, so co-op can come later without a rewrite. It renders physically based
+rooms with shadow maps, ambient occlusion and bloom across four quality presets. Its skinned
+characters' attack clips are timed so each impact lands on the tick the simulation deals the hit,
+and every copy of a model is GPU-skinned in one instanced draw. Balance is
 asserted rather than hoped for. On every push a bot fights the boss forty times through the real
 controls, and plays the whole chapter from a fresh level-1 character. The bot found a cannon that
 hit twice and a boss that collision could push out of the room. It also showed that a natural
 playthrough reached the boss still holding its starting weapon.
 
-<img src="projects/images/wyrdsteel/boss-fight.png" width="640" alt="A boss fight in a round ice cavern: the stone giant Hrungnir winds up a sweep, shown as a wide red sector on the floor around a level 14 player, while his clay guardian stands behind. Health bars for both run across the top, and a subtitle reads: Hrungnir: You cling to my knees. I will shake you off.">
+<img src="projects/images/wyrdsteel/boss-fight.jpg" width="640" alt="A boss fight in a rock-walled cavern, seen from above. The stone giant Hrungnir winds up a sweep, shown as a wide red sector with a bright rim on the floor, and the armoured player stands inside it. His clay guardian, Mökkurkálfi, stands to the left. Health bars for both run across the top.">
 
-`TypeScript` · `three.js` · `Preact` · `Web Audio` · `Vite` · `Vitest` · `Playwright` · `PWA` · `GitHub Pages`
+`TypeScript` · `three.js` · `glTF` · `Preact` · `Web Audio` · `Vite` · `Vitest` · `Playwright` · `PWA` · `GitHub Pages`
 
 ---
 
