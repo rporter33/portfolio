@@ -9,15 +9,15 @@ into outside of work.
 Every project here started the same way — with a real problem and nothing that quite fit. A
 pricing workbook that couldn't leave the office. A candidate pool nobody was systematically
 working, and a screening process that ate a day a week. A card game with no on-ramp for someone
-who has never played, a game beta with no way to take a note, and an ancient language with no
-bridge from vocabulary drills to reading real texts. Each time, I engineered my way out rather
+who has never played, a game beta with no way to take a note, an ancient language with no
+bridge from vocabulary drills to reading real texts, and a game whose sequels were never made. Each time, I engineered my way out rather
 than buy a tool that almost fit.
 
 This repository is a **showcase**, not a code dump. Each project below has a write-up
 covering what it does, how it's built, and the decisions I'd defend in a review. Most of
 the source is private, because it touches client and candidate data — happy to walk through
-any of it directly. MTG Companion and Hearthkeeper have nothing confidential in them, so both
-are public, with live apps you can open.
+any of it directly. MTG Companion, Hearthkeeper and Wyrdsteel have nothing confidential in them,
+so all three are public, with live apps you can open.
 
 Every write-up opens with a short *At a glance* summary — problem, what I built, result — so
 you can get the gist of each in under a minute and read further only where it's useful.
@@ -31,6 +31,7 @@ you can get the gist of each in under a minute and read further only where it's 
 | [MTG Companion](projects/mtg-companion.md) | Offline Magic: The Gathering app that teaches new players by playing | **1,600+ unit tests** and 33 browser specs gating every deploy | [Public](https://github.com/rporter33/mtg-companion) · [live](https://rporter33.github.io/mtg-companion/) |
 | [Hearthkeeper](projects/hearthkeeper.md) | Offline field journal for testers in the *World of Warcraft: Forever* beta | Coverage scored against what the level cap can reach, not the whole patch | [Public](https://github.com/rporter33/hearthkeeper) · [live](https://rporter33.github.io/hearthkeeper/) |
 | [Anagnosis](projects/anagnosis.md) | Offline Ancient Greek reader, from the alphabet to Homer | No accounts or server; learners own their progress as a file | Private |
+| [Wyrdsteel](projects/wyrdsteel.md) | Browser action RPG, a spiritual successor to *Too Human* that fixes what its critics faulted | A bot plays **the whole chapter and the boss** through the real controls on every push | [Public](https://github.com/rporter33/wyrdsteel) · [live](https://rporter33.github.io/wyrdsteel/) |
 
 ---
 
@@ -106,12 +107,31 @@ and no user data to lose. Learners own their progress as a JSON file.
 
 ---
 
+### [Wyrdsteel](projects/wyrdsteel.md) · [play it](https://rporter33.github.io/wyrdsteel/) · [source](https://github.com/rporter33/wyrdsteel)
+A browser action RPG of Norse gods rebuilt by machine: a spiritual successor to *Too Human*,
+built from that game's reviews.
+
+One complete chapter with two classes, Diablo-style loot, a three-phase boss that reads how you
+fight and answers it, and seeded endgame trials. It runs on a deterministic simulation built
+first, before any content, so co-op can come later without a rewrite. Instancing every model
+through a joint-matrix texture keeps a forty-enemy fight to around twenty draw calls. Balance is
+asserted rather than hoped for. On every push a bot fights the boss forty times through the real
+controls, and plays the whole chapter from a fresh level-1 character. The bot found a cannon that
+hit twice and a boss that collision could push out of the room. It also showed that a natural
+playthrough reached the boss still holding its starting weapon.
+
+<img src="projects/images/wyrdsteel/boss-fight.png" width="640" alt="A boss fight in a round ice cavern: the stone giant Hrungnir winds up a sweep, shown as a wide red sector on the floor around a level 14 player, while his clay guardian stands behind. Health bars for both run across the top, and a subtitle reads: Hrungnir: You cling to my knees. I will shake you off.">
+
+`TypeScript` · `three.js` · `Preact` · `Web Audio` · `Vite` · `Vitest` · `Playwright` · `PWA` · `GitHub Pages`
+
+---
+
 ## What these have in common
 
 **I write the reasoning down.** Most of these projects have an `ARCHITECTURE.md` or a
 blueprint document explaining not just what was built but which trade-offs were accepted and
-when to revisit them. Excel CES, MTG Companion and Hearthkeeper each keep a standing "Known
-trade-offs" table with a *When to revisit* column.
+when to revisit them. Excel CES, MTG Companion, Hearthkeeper and Wyrdsteel each keep a standing
+"Known trade-offs" table with a *When to revisit* column.
 
 **I validate against reality, not vibes.** The pricing engine was checked against real
 completed workbooks. The candidate scorer was re-run blind against the interview corpus it
